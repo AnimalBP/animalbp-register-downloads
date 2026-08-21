@@ -1,18 +1,17 @@
-# AnimalBP Register 1.3.1-beta.17
+# AnimalBP Register 1.3.1-beta.18
 
-This prerelease introduces the AnimalBP Register desktop name and the first
-official public pilot download location.
+This prerelease corrects the macOS packaging defect in beta.17 that caused
+Gatekeeper to report the downloaded application as damaged.
 
-- Adds macOS Apple silicon and Windows 64-bit application packages.
-- Keeps remembered sign-in credentials in operating-system protected storage.
-- Rotates remembered-device credentials after a successful reconnect.
-- Reports the application version with remembered-device metadata.
-- Uses a time-limited encrypted snapshot for disconnected view-only access.
-- Prevents offline writes and does not queue edits while disconnected.
-- Adds per-user device sign-out controls for permitted company and platform
-  administrators.
+- Applies a complete ad-hoc signature to the macOS application and every nested
+  Electron component.
+- Verifies the app from both the mounted DMG and extracted ZIP with strict,
+  deep code-signature checks before publication.
+- Retains the beta.17 desktop security model, remembered-device rotation,
+  encrypted view-only snapshot, and server-side device revocation.
+- Publishes matching macOS Apple silicon and Windows 64-bit beta.18 packages.
 
-These packages are unsigned. Automatic in-app installation is intentionally
-disabled. Read the installation warning in the repository README and verify the
-SHA-256 values before opening a package.
-
+The macOS build is ad-hoc signed for package integrity, not signed with an Apple
+Developer ID and not Apple-notarised. Windows is not Authenticode-signed.
+Automatic in-app installation remains disabled. Read the installation warning
+in the repository README and verify the SHA-256 values before opening a package.

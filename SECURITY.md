@@ -8,6 +8,7 @@ channel provided with your pilot invitation. Include the application version,
 operating system, and a concise reproduction that contains no customer records.
 
 The SHA-256 values attached to each release allow users to detect a corrupted
-or substituted download. They do not replace code signing. This pilot should
-not be treated as a signed or notarised production application.
-
+or substituted download. The beta.18 macOS ad-hoc signature checks internal
+bundle consistency, but it does not establish an Apple Developer identity or
+notarisation. Windows is not Authenticode-signed. This pilot must not be treated
+as a trusted signed or notarised production application.

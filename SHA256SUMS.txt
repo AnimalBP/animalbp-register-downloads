@@ -1,3 +1,3 @@
-d8d35304848cb75b9719800d430752c4061bc5d4e0ae8060bd8d2d2534316959  AnimalBP-Register-1.3.1-beta.17-mac-arm64.dmg
-a246fed868e9eddc05239426862bbbb3947a8792ed89440b1f6da471b9b3f048  AnimalBP-Register-1.3.1-beta.17-mac-arm64.zip
-7e282751ae41c2b6dead046cdd725cf6ef2a9011ca80dc86820b9634f673e145  AnimalBP-Register-1.3.1-beta.17-win-x64.zip
+aa09421717e0a97e137c593ad6c9796360e0a7cccbb1b086680f3e7d7b772e79  AnimalBP-Register-1.3.1-beta.18-mac-arm64.dmg
+92974d1904a500f90816cf485b52c1d5d75e150035e6a7f82ae905957e350c7e  AnimalBP-Register-1.3.1-beta.18-mac-arm64.zip
+c40e15baceeeef616939ecc97856647dad8f572252f86f1cd945dad7ebd6c2b1  AnimalBP-Register-1.3.1-beta.18-win-x64.zip

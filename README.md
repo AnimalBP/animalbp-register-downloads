@@ -7,19 +7,21 @@ environment configuration, and signing material are not included.
 
 ## Current pilot release
 
-Version **1.3.1-beta.17** is available from the
-[GitHub release page](https://github.com/AnimalBP/animalbp-register-downloads/releases/tag/v1.3.1-beta.17).
+Version **1.3.1-beta.18** is available from the
+[GitHub release page](https://github.com/AnimalBP/animalbp-register-downloads/releases/tag/v1.3.1-beta.18).
 
-- [Download for macOS Apple silicon](https://github.com/AnimalBP/animalbp-register-downloads/releases/download/v1.3.1-beta.17/AnimalBP-Register-1.3.1-beta.17-mac-arm64.dmg)
-- [Download for Windows 64-bit](https://github.com/AnimalBP/animalbp-register-downloads/releases/download/v1.3.1-beta.17/AnimalBP-Register-1.3.1-beta.17-win-x64.zip)
-- [Download SHA-256 checksums](https://github.com/AnimalBP/animalbp-register-downloads/releases/download/v1.3.1-beta.17/SHA256SUMS.txt)
+- [Download for macOS Apple silicon](https://github.com/AnimalBP/animalbp-register-downloads/releases/download/v1.3.1-beta.18/AnimalBP-Register-1.3.1-beta.18-mac-arm64.dmg)
+- [Download for Windows 64-bit](https://github.com/AnimalBP/animalbp-register-downloads/releases/download/v1.3.1-beta.18/AnimalBP-Register-1.3.1-beta.18-win-x64.zip)
+- [Download SHA-256 checksums](https://github.com/AnimalBP/animalbp-register-downloads/releases/download/v1.3.1-beta.18/SHA256SUMS.txt)
 
 ## Important pilot warning
 
-These files are **unsigned pilot builds**. macOS Gatekeeper and Windows
-SmartScreen may warn before the app opens. They are not signed or notarised
-production installers. Download only from this repository and verify the
-published SHA-256 checksum.
+These are **pilot builds**. The macOS application has a complete ad-hoc
+signature so its application bundle and nested Electron components can be
+verified as internally consistent. It does not have an Apple Developer ID
+signature and is not Apple-notarised. Windows is not Authenticode-signed.
+Gatekeeper and SmartScreen may therefore still request manual approval. Download
+only from this repository and verify the published SHA-256 checksum.
 
 The desktop application connects to the same protected AnimalBP cloud service
 as the browser application. It does not contain a PostgreSQL database or a copy
@@ -37,9 +39,9 @@ connection returns.
 
 1. Download the DMG and verify its SHA-256 checksum.
 2. Open the DMG and drag **AnimalBP Register** to Applications.
-3. Because this pilot is unsigned, macOS may block the first launch. Only use
-   the operating system's manual Open action if the checksum matches this
-   release and the file came from this repository.
+3. Because this pilot is not Apple-notarised, macOS may block the first launch.
+   Only use Finder's manual Open action or **Open Anyway** in Privacy & Security
+   if the checksum matches this release and the file came from this repository.
 
 ### Windows 64-bit
 
@@ -50,4 +52,3 @@ connection returns.
 
 Automatic in-app installation remains disabled until properly signed releases
 are available.
-
