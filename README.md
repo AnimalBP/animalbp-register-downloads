@@ -14,6 +14,10 @@ Version **1.3.1-beta.20** is available from the
 - [Download for Windows 64-bit](https://github.com/AnimalBP/animalbp-register-downloads/releases/download/v1.3.1-beta.20/AnimalBP-Register-1.3.1-beta.20-win-x64.zip)
 - [Download SHA-256 checksums](https://github.com/AnimalBP/animalbp-register-downloads/releases/download/v1.3.1-beta.20/SHA256SUMS.txt)
 
+Public pilot distribution uses the DMG for macOS and the ZIP for Windows. A Mac
+ZIP may still be generated inside private CI for package validation, but it is
+not published as a user download.
+
 ## Important pilot warning
 
 These are **pilot builds**. The macOS application has a complete ad-hoc
