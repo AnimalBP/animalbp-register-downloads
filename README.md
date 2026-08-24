@@ -7,12 +7,12 @@ environment configuration, and signing material are not included.
 
 ## Current pilot release
 
-Version **1.3.1-beta.20** is available from the
-[GitHub release page](https://github.com/AnimalBP/animalbp-register-downloads/releases/tag/v1.3.1-beta.20).
+Version **1.3.1-beta.21** is available from the
+[GitHub release page](https://github.com/AnimalBP/animalbp-register-downloads/releases/tag/v1.3.1-beta.21).
 
-- [Download for macOS Apple silicon](https://github.com/AnimalBP/animalbp-register-downloads/releases/download/v1.3.1-beta.20/AnimalBP-Register-1.3.1-beta.20-mac-arm64.dmg)
-- [Download for Windows 64-bit](https://github.com/AnimalBP/animalbp-register-downloads/releases/download/v1.3.1-beta.20/AnimalBP-Register-1.3.1-beta.20-win-x64.zip)
-- [Download SHA-256 checksums](https://github.com/AnimalBP/animalbp-register-downloads/releases/download/v1.3.1-beta.20/SHA256SUMS.txt)
+- [Download for macOS Apple silicon](https://github.com/AnimalBP/animalbp-register-downloads/releases/download/v1.3.1-beta.21/AnimalBP-Register-1.3.1-beta.21-mac-arm64.dmg)
+- [Download for Windows 64-bit](https://github.com/AnimalBP/animalbp-register-downloads/releases/download/v1.3.1-beta.21/AnimalBP-Register-1.3.1-beta.21-win-x64.zip)
+- [Download SHA-256 checksums](https://github.com/AnimalBP/animalbp-register-downloads/releases/download/v1.3.1-beta.21/SHA256SUMS.txt)
 
 Public pilot distribution uses the DMG for macOS and the ZIP for Windows. A Mac
 ZIP may still be generated inside private CI for package validation, but it is
@@ -54,6 +54,6 @@ connection returns.
 3. Open **AnimalBP Register.exe** from the extracted folder.
 4. Windows may show a SmartScreen warning because this pilot is unsigned.
 
-Beta.20 can check this public repository for a newer pilot and open its manual
+Beta.21 can check this public repository for a newer pilot and open its manual
 download. Automatic in-app installation remains disabled for unsigned pilot
 builds until properly signed releases are available.

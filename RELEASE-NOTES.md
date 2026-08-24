@@ -1,15 +1,16 @@
-# AnimalBP Register 1.3.1-beta.20
+# AnimalBP Register 1.3.1-beta.21
 
-This prerelease adds a visible desktop update check for future releases.
+This prerelease fixes desktop startup cases where AnimalBP Register was running
+but its main window did not appear.
 
-- Adds **Check for Updates…** to the AnimalBP Register menu on macOS and the
-  Help menu on Windows.
-- Corrects the native macOS application-menu name to AnimalBP Register.
-- Checks this official public release feed without requiring an AnimalBP or
-  Cloudflare sign-in and opens unsigned pilot updates as manual downloads.
-- Keeps automatic download and installation limited to configured signed
-  releases.
-- Publishes matching macOS Apple silicon and Windows 64-bit beta.20 packages.
+- Registers the Electron window-visibility handler before loading the desktop
+  interface so the initial show event cannot be missed.
+- Explicitly reveals the main window after loading as a safe fallback.
+- Restores, shows, and focuses an existing hidden or minimized window when the
+  application is opened again.
+- Adds regression tests for initial loading, early show events, minimized
+  windows, and destroyed-window handling.
+- Publishes matching macOS Apple silicon and Windows 64-bit beta.21 packages.
 
 The macOS build is ad-hoc signed for package integrity, not signed with an Apple
 Developer ID and not Apple-notarised. Windows is not Authenticode-signed.

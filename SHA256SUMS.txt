@@ -1,2 +1,2 @@
-f729b4764c454adddb2eeef12dcb68de9144f9becccaa7df7ab1f4adf3b914c1  AnimalBP-Register-1.3.1-beta.20-mac-arm64.dmg
-6a5958ecab941c99a5ce4f56d63dd4182bfe7a196d43f8de1d6a093745bc7f1b  AnimalBP-Register-1.3.1-beta.20-win-x64.zip
+6ec039a327032f06f4dc10adee62aa200205622177e6b374fd62fdf51f1aa007  AnimalBP-Register-1.3.1-beta.21-mac-arm64.dmg
+b11bf1bbc7fa2e02aade32fdadee3e2cb7de79283de529871ce927c0bedb95c2  AnimalBP-Register-1.3.1-beta.21-win-x64.zip
