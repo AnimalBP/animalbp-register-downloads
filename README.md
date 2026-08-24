@@ -7,15 +7,19 @@ environment configuration, and signing material are not included.
 
 ## Current pilot release
 
-Version **1.3.1-beta.21** is available from the
-[GitHub release page](https://github.com/AnimalBP/animalbp-register-downloads/releases/tag/v1.3.1-beta.21).
+Version **1.3.1-beta.22** is available from the
+[GitHub release page](https://github.com/AnimalBP/animalbp-register-downloads/releases/tag/v1.3.1-beta.22).
 
-- [Download for macOS Apple silicon](https://github.com/AnimalBP/animalbp-register-downloads/releases/download/v1.3.1-beta.21/AnimalBP-Register-1.3.1-beta.21-mac-arm64.dmg)
-- [Download for Windows 64-bit](https://github.com/AnimalBP/animalbp-register-downloads/releases/download/v1.3.1-beta.21/AnimalBP-Register-1.3.1-beta.21-win-x64.zip)
-- [Download SHA-256 checksums](https://github.com/AnimalBP/animalbp-register-downloads/releases/download/v1.3.1-beta.21/SHA256SUMS.txt)
+- [Download for macOS Apple silicon](https://github.com/AnimalBP/animalbp-register-downloads/releases/download/v1.3.1-beta.22/AnimalBP-Register-1.3.1-beta.22-mac-arm64.dmg)
+- [Download the Windows 64-bit per-user installer](https://github.com/AnimalBP/animalbp-register-downloads/releases/download/v1.3.1-beta.22/AnimalBP-Register-1.3.1-beta.22-win-x64.exe)
+- [Download the Windows transition ZIP](https://github.com/AnimalBP/animalbp-register-downloads/releases/download/v1.3.1-beta.22/AnimalBP-Register-1.3.1-beta.22-win-x64.zip)
+- [Download SHA-256 checksums](https://github.com/AnimalBP/animalbp-register-downloads/releases/download/v1.3.1-beta.22/SHA256SUMS.txt)
 
-Public pilot distribution uses the DMG for macOS and the ZIP for Windows. A Mac
-ZIP may still be generated inside private CI for package validation, but it is
+New Windows users should use the per-user installer. The Windows ZIP remains for
+the one-time transition from beta.21 and earlier. The installer, its blockmap,
+and `beta.yml` are published together so later complete Windows releases can be
+downloaded from inside the app. Public macOS distribution continues to use only
+the DMG. A Mac ZIP may be generated inside private CI for validation, but it is
 not published as a user download.
 
 ## Important pilot warning
@@ -49,11 +53,21 @@ connection returns.
 
 ### Windows 64-bit
 
-1. Download the ZIP and verify its SHA-256 checksum.
-2. Extract the ZIP to a user-controlled folder.
-3. Open **AnimalBP Register.exe** from the extracted folder.
-4. Windows may show a SmartScreen warning because this pilot is unsigned.
+1. Download the `.exe` installer and verify its SHA-256 checksum.
+2. Run the installer. It installs only for the signed-in Windows user under
+   Local AppData. It does not request Windows administrator access.
+3. Windows may show a SmartScreen warning because this pilot is unsigned. An
+   organisation may also block unsigned applications by policy.
+4. In later releases, use **Check for Updates…** inside AnimalBP Register, then
+   choose **Download Update** and **Restart and install**.
 
-Beta.21 can check this public repository for a newer pilot and open its manual
-download. Automatic in-app installation remains disabled for unsigned pilot
-builds until properly signed releases are available.
+Beta.21 and earlier have a one-time transition because those versions only know
+how to open the Windows ZIP. For the easiest transition, download and run the
+beta.22 per-user installer directly from the release page. Once beta.22 is
+installed, later complete Windows pilot releases can use the in-app updater.
+
+The Windows updater verifies the downloaded installer against the SHA-512 value
+in `beta.yml`. This detects corruption or a mismatch between the manifest and
+installer, but it does not provide an authenticated publisher identity. Windows
+remains unsigned until a code-signing certificate is added. macOS updates remain
+manual until Developer ID signing and Apple notarisation are available.
