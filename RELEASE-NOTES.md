@@ -1,18 +1,18 @@
-# AnimalBP Register 1.3.1-beta.22
+# AnimalBP Register 1.3.1-beta.26
 
-This prerelease adds a fee-free, no-admin Windows installation and update path.
+This prerelease adds faster setup for similar laboratory storage locations.
 
-- Adds a one-click Windows installer fixed to the signed-in user's Local AppData
-  profile, with no machine-wide option or elevation helper.
-- Adds opt-in Windows update downloads from complete official GitHub releases.
-- Verifies each in-app Windows download against the SHA-512 value in `beta.yml`
-  before offering restart and installation.
-- Rejects update manifests whose version does not exactly match the selected
-  official release, and explicitly prevents downgrade installation.
-- Retains the Windows ZIP for the one-time transition from beta.21 and earlier.
-- Keeps macOS pilot updates as manual DMG downloads until Apple Developer ID
-  signing and notarisation are available.
-- Retains the beta.21 desktop window-visibility correction.
+- Adds a Duplicate action to Laboratory Setup for copying a fridge, freezer,
+  incubator, archive, cryofreezer, or custom storage location.
+- Copies room, type, custom location, and workflow visibility into a new
+  editable form, with the next available unit number selected automatically.
+- Keeps the duplicate as a separate storage identity and does not copy racks,
+  samples, materials, or stored records.
+- Retains secure user invitations, forced first-sign-in password replacement,
+  view-only downloads, web-session controls, and optional unit numbers from
+  beta.24 and beta.25.
+- Retains the current-user Windows installer and verified in-app Windows update
+  manifest introduced in beta.22.
 
 The macOS build is ad-hoc signed for package integrity, not signed with an Apple
 Developer ID and not Apple-notarised. Windows is not Authenticode-signed.

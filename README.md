@@ -7,13 +7,13 @@ environment configuration, and signing material are not included.
 
 ## Current pilot release
 
-Version **1.3.1-beta.22** is available from the
-[GitHub release page](https://github.com/AnimalBP/animalbp-register-downloads/releases/tag/v1.3.1-beta.22).
+Version **1.3.1-beta.26** is available from the
+[GitHub release page](https://github.com/AnimalBP/animalbp-register-downloads/releases/tag/v1.3.1-beta.26).
 
-- [Download for macOS Apple silicon](https://github.com/AnimalBP/animalbp-register-downloads/releases/download/v1.3.1-beta.22/AnimalBP-Register-1.3.1-beta.22-mac-arm64.dmg)
-- [Download the Windows 64-bit per-user installer](https://github.com/AnimalBP/animalbp-register-downloads/releases/download/v1.3.1-beta.22/AnimalBP-Register-1.3.1-beta.22-win-x64.exe)
-- [Download the Windows transition ZIP](https://github.com/AnimalBP/animalbp-register-downloads/releases/download/v1.3.1-beta.22/AnimalBP-Register-1.3.1-beta.22-win-x64.zip)
-- [Download SHA-256 checksums](https://github.com/AnimalBP/animalbp-register-downloads/releases/download/v1.3.1-beta.22/SHA256SUMS.txt)
+- [Download for macOS Apple silicon](https://github.com/AnimalBP/animalbp-register-downloads/releases/download/v1.3.1-beta.26/AnimalBP-Register-1.3.1-beta.26-mac-arm64.dmg)
+- [Download the Windows 64-bit per-user installer](https://github.com/AnimalBP/animalbp-register-downloads/releases/download/v1.3.1-beta.26/AnimalBP-Register-1.3.1-beta.26-win-x64.exe)
+- [Download the Windows transition ZIP](https://github.com/AnimalBP/animalbp-register-downloads/releases/download/v1.3.1-beta.26/AnimalBP-Register-1.3.1-beta.26-win-x64.zip)
+- [Download SHA-256 checksums](https://github.com/AnimalBP/animalbp-register-downloads/releases/download/v1.3.1-beta.26/SHA256SUMS.txt)
 
 New Windows users should use the per-user installer. The Windows ZIP remains for
 the one-time transition from beta.21 and earlier. The installer, its blockmap,
@@ -63,7 +63,7 @@ connection returns.
 
 Beta.21 and earlier have a one-time transition because those versions only know
 how to open the Windows ZIP. For the easiest transition, download and run the
-beta.22 per-user installer directly from the release page. Once beta.22 is
+beta.26 per-user installer directly from the release page. Once beta.26 is
 installed, later complete Windows pilot releases can use the in-app updater.
 
 The Windows updater verifies the downloaded installer against the SHA-512 value

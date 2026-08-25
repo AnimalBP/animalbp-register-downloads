@@ -1,5 +1,5 @@
-4e2be879e15860fe7cecba0dc64be6f165c3dd4dd5b904aa210f03989e480902  AnimalBP-Register-1.3.1-beta.22-mac-arm64.dmg
-70cacaf971b3aa47e4d03c67cb8666790b0a7d27f41d77522936acede09b585c  AnimalBP-Register-1.3.1-beta.22-win-x64.exe
-104246650016997812e582409ff70cf0566aa3130b4c31fd2b7a40b00423d42f  AnimalBP-Register-1.3.1-beta.22-win-x64.exe.blockmap
-c11d71ee0442f13df823c20b276a0f3194679766fe5f3fd0fa678929292143d4  AnimalBP-Register-1.3.1-beta.22-win-x64.zip
-be0c3cc214be827bea61d5c39f46067d161ca3b91784a0962e808e4e9c19ea1e  beta.yml
+35b164f337fdb67f705a43dac530a82605bf07fa2157cd4668db7c0ad564c761  AnimalBP-Register-1.3.1-beta.26-mac-arm64.dmg
+e202141fee65fafd91d71d7b5d95951431e629325537931ed89877a756740ad3  AnimalBP-Register-1.3.1-beta.26-win-x64.exe
+4099d17eaec0e8105c81282a00cebd7fdefd9918148104d6a61af95c5737e5eb  AnimalBP-Register-1.3.1-beta.26-win-x64.exe.blockmap
+61674661cee4ebc921e32f1e91c8b328adcd9a99cd21817cd3957fee15c116fb  AnimalBP-Register-1.3.1-beta.26-win-x64.zip
+290f25c2538c565582b1dc6ac335ed3e0ee141fcb384bfe92d11a340bd25b7ad  beta.yml
