@@ -7,13 +7,11 @@ environment configuration, and signing material are not included.
 
 ## Current pilot release
 
-Version **1.3.1-beta.26** is available from the
-[GitHub release page](https://github.com/AnimalBP/animalbp-register-downloads/releases/tag/v1.3.1-beta.26).
+Version **1.4.1** is available from the
+[GitHub release page](https://github.com/AnimalBP/animalbp-register-downloads/releases).
 
-- [Download for macOS Apple silicon](https://github.com/AnimalBP/animalbp-register-downloads/releases/download/v1.3.1-beta.26/AnimalBP-Register-1.3.1-beta.26-mac-arm64.dmg)
-- [Download the Windows 64-bit per-user installer](https://github.com/AnimalBP/animalbp-register-downloads/releases/download/v1.3.1-beta.26/AnimalBP-Register-1.3.1-beta.26-win-x64.exe)
-- [Download the Windows transition ZIP](https://github.com/AnimalBP/animalbp-register-downloads/releases/download/v1.3.1-beta.26/AnimalBP-Register-1.3.1-beta.26-win-x64.zip)
-- [Download SHA-256 checksums](https://github.com/AnimalBP/animalbp-register-downloads/releases/download/v1.3.1-beta.26/SHA256SUMS.txt)
+- [Download for macOS Apple silicon](https://github.com/AnimalBP/animalbp-register-downloads/releases/download/untagged-2dc0e9491faf58ceaf1a/AnimalBP-Register-1.4.1-mac-arm64.dmg)
+- [Download the Windows 64-bit per-user installer](https://apps.microsoft.com/detail/9NP93BBMMZ4S)
 
 New Windows users should use the per-user installer. The Windows ZIP remains for
 the one-time transition from beta.21 and earlier. The installer, its blockmap,
