@@ -40,6 +40,32 @@ class PublicReleaseTests(unittest.TestCase):
     def test_complete_matching_release_passes(self):
         self.assertEqual(self.validate(), "1.4.4")
 
+    def test_web_manifest_checksum_is_required_starting_at_145(self):
+        self.assertNotIn("release-content.json", expected_assets("1.4.4"))
+        for version in ("1.4.5", "1.5.0", "2.0.0"):
+            with self.subTest(version=version):
+                self.assertIn("release-content.json", expected_assets(version))
+                self.assertEqual(len(expected_assets(version)), 7)
+
+    def test_145_web_manifest_is_bound_by_root_checksums_release_checksums_and_api_digest(self):
+        self.updater = self.updater.replace(b"1.4.4", b"1.4.5")
+        self.contents = {name.replace("1.4.4", "1.4.5"): data.replace(b"1.4.4", b"1.4.5") for name, data in self.contents.items()}
+        self.contents["release-content.json"] = b'{"reviewed":"web-content-fixture"}\n'
+        self.checksums = "".join(f"{hashlib.sha256(data).hexdigest()}  {name}\n"
+                                 for name, data in sorted(self.contents.items())).encode()
+        self.documents = {name: data.replace(b"1.4.4", b"1.4.5") for name, data in self.documents.items()}
+        self.documents["SHA256SUMS.txt"] = self.checksums
+        self.release.update({"tag_name": "v1.4.5", "assets": [
+            {"name": name, "digest": "sha256:" + hashlib.sha256(data).hexdigest()}
+            for name, data in {**self.contents, "SHA256SUMS.txt": self.checksums,
+                               "RELEASE-NOTES.md": self.documents["RELEASE-NOTES.md"]}.items()
+        ]})
+        self.assertEqual(self.validate(), "1.4.5")
+        self.release["assets"] = [asset | ({"digest": "sha256:" + "f" * 64} if asset["name"] == "release-content.json" else {})
+                                   for asset in self.release["assets"]]
+        with self.assertRaisesRegex(ReleaseError, "GitHub asset digest differs.*release-content.json"):
+            self.validate()
+
     def test_stale_root_listing_is_rejected(self):
         for name in ("README.md", "RELEASE-NOTES.md"):
             with self.subTest(name=name):

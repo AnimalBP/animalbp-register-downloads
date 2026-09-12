@@ -13,6 +13,8 @@ import sys
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
+from verify_web_demo import WebAlignmentPending, WebCheckError, verify_web_demo
+
 
 STABLE_TAG = re.compile(r"v((?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*))")
 REPOSITORY = re.compile(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+")
@@ -29,11 +31,14 @@ def require(condition: bool, message: str) -> None:
 
 def expected_assets(version: str) -> set[str]:
     prefix = f"AnimalBP-Register-{version}"
-    return {
+    assets = {
         f"{prefix}-mac-arm64.dmg", f"{prefix}-mac-arm64.zip",
         f"{prefix}-win-x64.exe", f"{prefix}-win-x64.exe.blockmap",
         f"{prefix}-win-x64.zip", "latest.yml",
     }
+    if tuple(map(int, version.split("."))) >= (1, 4, 5):
+        assets.add("release-content.json")
+    return assets
 
 
 def checksum_entries(content: bytes) -> dict[str, str]:
@@ -94,7 +99,7 @@ def validate_release(repo: str, release: dict, documents: dict[str, bytes],
             "Root SHA256SUMS.txt differs from the published release checksum file")
     checksums = checksum_entries(release_checksums)
     require(set(checksums) == expected_assets(version),
-            "SHA256SUMS.txt must cover exactly the six current public files")
+            "SHA256SUMS.txt must cover exactly the required current public files")
     for name, digest in checksums.items():
         require(assets[name].get("digest") == f"sha256:{digest}",
                 f"GitHub asset digest differs from SHA256SUMS.txt: {name}")
@@ -144,10 +149,19 @@ def main() -> int:
         # Public downloads use no API token, including redirects to asset storage.
         version = validate_release(args.repo, release, documents,
                                    fetch(base + "SHA256SUMS.txt"), fetch(base + "latest.yml"))
-        print(f"PASS: GitHub {version} documents, six asset digests, and Windows updater agree.")
+        print(f"PASS: GitHub {version} documents, {len(expected_assets(version))} asset digests, and Windows updater agree.")
+        web = verify_web_demo(args.repo, release, fetch)
+        if web["status"] == "legacy_not_configured":
+            print("SKIP: Web/demo byte parity was not configured for this legacy release; no parity pass is claimed.")
+        else:
+            print(f"PASS: Web/demo {version} match the release-pinned manifest across {web['runtime_assets_verified']} assets and {web['runtime_urls_verified']} runtime URLs.")
+        print(json.dumps({"github_version": version, "web_demo": web}, sort_keys=True))
         print("Microsoft Store publication and installed-app acceptance require separate evidence.")
         return 0
-    except (ReleaseError, OSError, HTTPError, URLError, KeyError, TypeError,
+    except WebAlignmentPending as error:
+        print(f"PENDING: {error}", file=sys.stderr)
+        return 2
+    except (ReleaseError, WebCheckError, OSError, HTTPError, URLError, KeyError, TypeError,
             UnicodeError, json.JSONDecodeError) as error:
         print(f"FAIL: {error}", file=sys.stderr)
         return 1
