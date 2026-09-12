@@ -1,71 +1,55 @@
 # AnimalBP Register desktop downloads
 
-This public repository is the official download location for AnimalBP Register
-desktop pilot builds. It contains release guidance and packaged application
-files only. The cloud backend, customer records, credentials, databases,
-environment configuration, and signing material are not included.
+Official desktop installers, release notes, and checksums for AnimalBP Register.
+The browser app is available at [app.animalbp.com](https://app.animalbp.com/).
 
-## Current pilot release
+## Current release: 1.4.4
 
-Version **1.4.1** is available from the
-[GitHub release page](https://github.com/AnimalBP/animalbp-register-downloads/releases).
+Version 1.4.4 puts **Receiving note (optional)** and **Choose File** inside the
+Receive goods form, before Comments, matching the online form. Select the PDF
+or supported image before registration; it is attached to package 1 after the
+receipt is registered.
 
-- [Download for macOS Apple silicon](https://github.com/AnimalBP/animalbp-register-downloads/releases/download/untagged-2dc0e9491faf58ceaf1a/AnimalBP-Register-1.4.1-mac-arm64.dmg)
-- [Download the Windows 64-bit per-user installer](https://apps.microsoft.com/detail/9NP93BBMMZ4S)
+- [Latest release and downloads](https://github.com/AnimalBP/animalbp-register-downloads/releases/latest)
+- [Mac 1.4.4 installer — Apple silicon](https://github.com/AnimalBP/animalbp-register-downloads/releases/download/v1.4.4/AnimalBP-Register-1.4.4-mac-arm64.dmg)
+- [Windows — Microsoft Store](https://apps.microsoft.com/detail/9NP93BBMMZ4S)
+- [1.4.4 release notes and all assets](https://github.com/AnimalBP/animalbp-register-downloads/releases/tag/v1.4.4)
+- [1.4.4 SHA-256 checksums](https://github.com/AnimalBP/animalbp-register-downloads/releases/download/v1.4.4/SHA256SUMS.txt)
 
-New Windows users should use the per-user installer. The Windows ZIP remains for
-the one-time transition from beta.21 and earlier. The installer, its blockmap,
-and `beta.yml` are published together so later complete Windows releases can be
-downloaded from inside the app. Public macOS distribution continues to use only
-the DMG. A Mac ZIP may be generated inside private CI for validation, but it is
-not published as a user download.
+The Mac app version is **1.4.4** and the matching Microsoft Store package version
+is **1.4.4.0**. Store availability follows Microsoft's certification and rollout;
+publishing a GitHub release does not publish a Store update. The release page
+records each channel's verified publication status.
 
-## Important pilot warning
+## Installation and updates
 
-These are **pilot builds**. The macOS application has a complete ad-hoc
-signature so its application bundle and nested Electron components can be
-verified as internally consistent. It does not have an Apple Developer ID
-signature and is not Apple-notarised. Windows is not Authenticode-signed.
-Gatekeeper and SmartScreen may therefore still request manual approval. Download
-only from this repository and verify the published SHA-256 checksum.
+**Mac:** Download the DMG, verify its checksum, open it, and follow the English
+or Danish `READ ME FIRST.txt` guide to copy AnimalBP Register to Applications.
+The app is ad-hoc signed for package integrity, without an Apple Developer ID
+signature or Apple notarization. If macOS blocks it only because the developer
+cannot be verified, follow the guide's **Open Anyway** steps. Do not override a
+malware or damaged-package warning. Managed Macs may require IT approval.
+Mac updates are installed manually; automatic Mac updates are disabled.
 
-The desktop application connects to the same protected AnimalBP cloud service
-as the browser application. It does not contain a PostgreSQL database or a copy
-of customer records. Remembered sign-in uses a rotating server-revocable device
-credential protected by macOS Keychain or Windows operating-system credential
-protection. The password is not stored by the desktop application.
+**Windows from Microsoft Store:** Install and update through Microsoft Store.
+The Store-installed app uses Store-managed updates. Use Microsoft Store's
+Library to check for an available update.
 
-If the connection is lost, an encrypted, time-limited local snapshot may be
-shown in view-only mode. Changes cannot be entered or queued until the secure
-connection returns.
+**Windows installed directly from GitHub:** The release page provides a separate
+64-bit per-user installer. This channel uses **Check for Updates**, **Download
+Update**, and **Restart and install** in the app. A complete stable update
+includes the `.exe`, its `.blockmap`, and `latest.yml`. The direct installer is
+not Authenticode-signed; the update checksum verifies file integrity, not the
+publisher's identity. Organisation policies may restrict its installation.
 
-## Installation
+Existing workspaces and recorded data remain available. Desktop and browser
+clients connect to the same service. These downloads contain application code,
+not customer databases, backend credentials, or server signing material.
 
-### macOS Apple silicon
+## Release provenance
 
-1. Download the DMG and verify its SHA-256 checksum.
-2. Open the DMG and drag **AnimalBP Register** to Applications.
-3. Because this pilot is not Apple-notarised, macOS may block the first launch.
-   Only use Finder's manual Open action or **Open Anyway** in Privacy & Security
-   if the checksum matches this release and the file came from this repository.
-
-### Windows 64-bit
-
-1. Download the `.exe` installer and verify its SHA-256 checksum.
-2. Run the installer. It installs only for the signed-in Windows user under
-   Local AppData. It does not request Windows administrator access.
-3. Windows may show a SmartScreen warning because this pilot is unsigned. An
-   organisation may also block unsigned applications by policy.
-4. In later releases, use **Check for Updates…** inside AnimalBP Register, then
-   choose **Download Update** and **Restart and install**.
-
-Beta.21 and earlier have a one-time transition because those versions only know
-how to open the Windows ZIP. For the easiest transition, download and run the
-beta.26 per-user installer directly from the release page. Once beta.26 is
-installed, later complete Windows pilot releases can use the in-app updater.
-
-The Windows updater verifies the downloaded installer against the SHA-512 value
-in `beta.yml`. This detects corruption or a mismatch between the manifest and
-installer, but it does not provide an authenticated publisher identity. Windows
-remains unsigned until a code-signing certificate is added. macOS updates remain
-manual until Developer ID signing and Apple notarisation are available.
+The 1.4.4 Mac and Windows packages are built from reviewed source commit
+`d2bcdb509870db301b44f45b71790f28220712ea`. Check the version-specific
+`SHA256SUMS.txt` attached to the release before opening a downloaded installer.
+Earlier releases remain available as historical records; use the latest stable
+release for a new installation.
