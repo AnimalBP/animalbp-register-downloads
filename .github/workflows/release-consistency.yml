@@ -1,0 +1,44 @@
+name: Public release consistency
+
+on:
+  release:
+    types: [published, edited]
+  push:
+    branches: [main]
+    paths:
+      - README.md
+      - RELEASE-NOTES.md
+      - RELEASE-CHECKLIST.md
+      - SHA256SUMS.txt
+      - scripts/verify_public_release.py
+      - scripts/test_verify_public_release.py
+      - .github/workflows/release-consistency.yml
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: public-release-consistency
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Read current public documentation
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          # Release events point at a tag; always check the current default
+          # branch so the daily and release checks inspect the same documents.
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+      - name: Test the consistency guard
+        run: python3 -m unittest discover -s scripts -p 'test_verify_public_release.py' -v
+      - name: Verify current documentation and public release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 scripts/verify_public_release.py
