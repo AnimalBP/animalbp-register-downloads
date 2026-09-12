@@ -19,6 +19,12 @@ corresponds to **1.4.4.0**.
   `SHA256SUMS.txt` together. Their versions and download links must match the
   release, and the root checksum file must match the checksum asset attached
   to that release.
+- From 1.4.5, publish `release-content.json` from the reviewed production app
+  build and include its hash in both checksum files. Its shared assets must
+  include `assets/desktop-downloads.json`. The existing daily/release guard
+  verifies public web/demo bytes and `https://animalbp.com/downloads.json`
+  against this release-pinned app catalog; the website cannot authorize its
+  own changed content by serving a matching version label.
 - Upload the matching Windows Store package and copy the reviewed Store
   release notes into Partner Center. Save, reload, and compare the saved notes
   with the reviewed text. Record the submission ID, package version, and actual
@@ -36,6 +42,10 @@ corresponds to **1.4.4.0**.
   the matching Store release is ready. Then promote the matching website
   change, verify its displayed version and final download links, and check the
   generated download catalog.
+  A coherent older website catalog during this publication window reports
+  `PENDING` (exit 2), without a parity pass. Changed same-version content, mixed
+  versions or a website version ahead of GitHub fail verification. Rerun the
+  existing workflow after deployment/cache propagation completes.
 - After Store approval and rollout, update a computer with the earlier
   Store-installed app. Verify its package version, Store signature, retained
   workspace access, and receiving-note interaction. A successful package

@@ -15,6 +15,9 @@ from urllib.parse import urljoin, urlsplit
 WEB = "https://app.animalbp.com/"
 DEMO = WEB + "?demo=1"
 MANIFEST_NAME = "release-content.json"
+WEBSITE_CATALOG = "https://animalbp.com/downloads.json"
+APP_CATALOG_ASSET = "assets/desktop-downloads.json"
+STABLE_VERSION = r"(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)"
 
 
 class WebCheckError(ValueError):
@@ -75,12 +78,60 @@ def validate_manifest(manifest, version):
     app = manifest.get("app_asset")
     require(isinstance(app, str) and app in assets and "styles.css" in assets,
             "Release manifest must identify the loaded application and stylesheet")
+    require(APP_CATALOG_ASSET in assets, "Release manifest must pin the shared desktop download catalog")
     require(app == f"app-{version}-{assets[app][:12]}.js", "Release application filename must match its content hash")
     require(manifest.get("shared_content_sha256") == digest(json.dumps(dict(sorted(assets.items())), separators=(",", ":")).encode()),
             "Release runtime content digest is invalid")
     for field in ["web_config_sha256", "web_index_sha256"]:
         value = manifest.get(field)
         require(isinstance(value, str) and re.fullmatch(r"[0-9a-f]{64}", value), f"Invalid {field}")
+
+
+def catalog_version(raw, label):
+    catalog = json_object(raw, label)
+    platforms = catalog.get("platforms")
+    require(catalog.get("schema") == 1 and isinstance(platforms, list) and len(platforms) == 2
+            and all(isinstance(item, dict) for item in platforms), f"{label} has an invalid platform catalog")
+    platforms = {item.get("id"): item for item in platforms}
+    require(set(platforms) == {"macos", "windows"}, f"{label} must contain exactly Mac and Windows")
+    mac, windows = platforms["macos"], platforms["windows"]
+    title = mac.get("title")
+    match = re.fullmatch(r"Mac · (" + STABLE_VERSION + r")", title) if isinstance(title, str) else None
+    require(match is not None, f"{label} must identify one stable Mac version")
+    version = match[1]
+    base = "https://github.com/AnimalBP/animalbp-register-downloads/releases"
+    require(mac.get("url") == f"{base}/download/v{version}/AnimalBP-Register-{version}-mac-arm64.dmg",
+            f"{label} Mac title and official installer URL must agree")
+    require(windows.get("title") == "Windows"
+            and windows.get("url") == "https://apps.microsoft.com/detail/9NP93BBMMZ4S?mode=direct",
+            f"{label} must preserve truthful Microsoft Store availability")
+    notes, links = catalog.get("notes"), catalog.get("links")
+    require(isinstance(notes, list) and len(notes) >= 3 and all(isinstance(note, str) for note in notes)
+            and isinstance(links, list) and all(isinstance(link, dict) for link in links)
+            and any(link.get("url") == f"{base}/tag/v{version}" for link in links),
+            f"{label} must include complete installation notes and matching release notes")
+    serialized = json.dumps(catalog)
+    for pattern in [r"/releases/(?:download|tag)/v([^\s/\"'<>]+)",
+                    r"AnimalBP-Register-([^\s/\"'<>]+?)-(?:mac|win)-"]:
+        require(all(found == version for found in re.findall(pattern, serialized)),
+                f"{label} contains mixed release versions")
+    return version
+
+
+def verify_website_catalog(raw_expected, expected_sha256, version, fetch):
+    require(digest(raw_expected) == expected_sha256,
+            "Application catalog differs from its release-pinned digest")
+    require(catalog_version(raw_expected, "Release-pinned app catalog") == version,
+            "Release-pinned app catalog has the wrong release version")
+    public_bytes = fetch(WEBSITE_CATALOG)
+    public_version = catalog_version(public_bytes, "Public website catalog")
+    if tuple(map(int, public_version.split("."))) < tuple(map(int, version.split("."))):
+        raise WebAlignmentPending(f"GitHub {version} is published; website downloads are {public_version}. "
+                                  "Website publication/cache propagation is pending alignment, not verified parity.")
+    require(public_version == version, "Public website catalog is ahead of the latest stable release")
+    require(digest(public_bytes) == expected_sha256,
+            "Same-version website catalog differs from the release-pinned app catalog")
+    return {"status": "passed", "version": version, "url": WEBSITE_CATALOG, "sha256": expected_sha256}
 
 
 def verify_web_demo(repo, release, fetch):
@@ -145,8 +196,10 @@ def verify_web_demo(repo, release, fetch):
     for name, variants in urls.items():
         for url in variants - {WEB + name}:
             require(digest(fetch(url)) == manifest["assets"][name], f"Actual browser query URL differs from release content: {name}")
+    website_catalog = verify_website_catalog(bodies[APP_CATALOG_ASSET], manifest["assets"][APP_CATALOG_ASSET], version, fetch)
     return {"status": "passed", "version": version, "parity_verified": True,
             "release_manifest_asset_id": asset["id"], "release_manifest_sha256": digest(raw_manifest),
             "shared_content_sha256": manifest["shared_content_sha256"],
             "runtime_assets_verified": len(bodies), "runtime_urls_verified": sum(map(len, urls.values())),
-            "scope": "Public web/demo bytes only; no demo session, backend or Store acceptance inferred"}
+            "website_catalog": website_catalog,
+            "scope": "Public web/demo bytes and website catalog only; no demo session, backend or Store acceptance inferred"}

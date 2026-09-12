@@ -152,9 +152,9 @@ def main() -> int:
         print(f"PASS: GitHub {version} documents, {len(expected_assets(version))} asset digests, and Windows updater agree.")
         web = verify_web_demo(args.repo, release, fetch)
         if web["status"] == "legacy_not_configured":
-            print("SKIP: Web/demo byte parity was not configured for this legacy release; no parity pass is claimed.")
+            print("SKIP: Web/demo and website catalog byte parity was not configured for this legacy release; no parity pass is claimed.")
         else:
-            print(f"PASS: Web/demo {version} match the release-pinned manifest across {web['runtime_assets_verified']} assets and {web['runtime_urls_verified']} runtime URLs.")
+            print(f"PASS: Web/demo {version} match the release-pinned manifest across {web['runtime_assets_verified']} assets and {web['runtime_urls_verified']} runtime URLs; the public website catalog matches its release-pinned app catalog.")
         print(json.dumps({"github_version": version, "web_demo": web}, sort_keys=True))
         print("Microsoft Store publication and installed-app acceptance require separate evidence.")
         return 0

@@ -40,7 +40,7 @@ jobs:
           persist-credentials: false
       - name: Test the consistency guard
         run: python3 -m unittest discover -s scripts -p 'test_verify*.py' -v
-      - name: Verify current documentation, public release and web/demo parity
+      - name: Verify current documentation, public release, web/demo and website catalog
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python3 scripts/verify_public_release.py
