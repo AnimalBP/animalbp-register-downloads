@@ -7,8 +7,9 @@ The browser app is available at [app.animalbp.com](https://app.animalbp.com/).
 
 Version 1.4.5 adds Microsoft Store update controls inside the Windows app,
 separates Audit history into Usage and System log, improves project cryovial
-selection, and keeps errors visible above open forms. The matching Mac, Windows
-and web builds are numbered 1.4.5; their publication status is tracked separately.
+selection, and keeps errors visible above open forms. The released Mac, Windows
+and browser interfaces use version 1.4.5; Microsoft Store represents the same
+version as 1.4.5.0.
 
 - [Latest release and downloads](https://github.com/AnimalBP/animalbp-register-downloads/releases/latest)
 - [Mac 1.4.5 installer — Apple silicon](https://github.com/AnimalBP/animalbp-register-downloads/releases/download/v1.4.5/AnimalBP-Register-1.4.5-mac-arm64.dmg)
@@ -16,12 +17,20 @@ and web builds are numbered 1.4.5; their publication status is tracked separatel
 - [1.4.5 release notes and all assets](https://github.com/AnimalBP/animalbp-register-downloads/releases/tag/v1.4.5)
 - [1.4.5 SHA-256 checksums](https://github.com/AnimalBP/animalbp-register-downloads/releases/download/v1.4.5/SHA256SUMS.txt)
 
-**Microsoft Store package 1.4.5.0 is published**, confirmed in Partner Center
-on 19 September 2026 UTC.
-Windows installation and the native in-app update interaction are still being
-checked separately. The public browser app and backend currently remain on
-1.4.1 while their 1.4.5 promotion checks are completed. The website update is
-also pending; a prepared build is not evidence of a completed public rollout.
+**Release status, 19 September 2026 UTC:** GitHub 1.4.5 and Microsoft Store
+1.4.5.0 are published. All nine public GitHub assets have passed download and
+checksum verification. The backend and browser/demo have been deployed as 1.4.5;
+the backend passed readiness and data-preservation checks. Final automated
+web/demo content verification remains in progress.
+
+The website's 1.4.5 deployment and download catalog are verified. Its existing
+Cloudflare Access sign-in remains in place. The owner checked the authenticated
+website's Mac 1.4.5 choice, installation guidance and Microsoft Store destination.
+
+An installed Windows test device is currently unavailable. The package and
+listing are verified, and an isolated direct-installer upgrade passed, but the
+native Microsoft Store in-app check/download/install interaction has not yet
+been verified on an installed Windows device.
 
 ## Installation and updates
 
