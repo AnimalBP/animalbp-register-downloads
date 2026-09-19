@@ -3,53 +3,58 @@
 Official desktop installers, release notes, and checksums for AnimalBP Register.
 The browser app is available at [app.animalbp.com](https://app.animalbp.com/).
 
-## Current release: 1.4.4
+## Current release: 1.4.5
 
-Version 1.4.4 puts **Receiving note (optional)** and **Choose File** inside the
-Receive goods form, before Comments, matching the online form. Select the PDF
-or supported image before registration; it is attached to package 1 after the
-receipt is registered.
+Version 1.4.5 adds Microsoft Store update controls inside the Windows app,
+separates Audit history into Usage and System log, improves project cryovial
+selection, and keeps errors visible above open forms. The matching Mac, Windows
+and web builds are numbered 1.4.5; their publication status is tracked separately.
 
 - [Latest release and downloads](https://github.com/AnimalBP/animalbp-register-downloads/releases/latest)
-- [Mac 1.4.4 installer — Apple silicon](https://github.com/AnimalBP/animalbp-register-downloads/releases/download/v1.4.4/AnimalBP-Register-1.4.4-mac-arm64.dmg)
+- [Mac 1.4.5 installer — Apple silicon](https://github.com/AnimalBP/animalbp-register-downloads/releases/download/v1.4.5/AnimalBP-Register-1.4.5-mac-arm64.dmg)
 - [Windows — Microsoft Store](https://apps.microsoft.com/detail/9NP93BBMMZ4S)
-- [1.4.4 release notes and all assets](https://github.com/AnimalBP/animalbp-register-downloads/releases/tag/v1.4.4)
-- [1.4.4 SHA-256 checksums](https://github.com/AnimalBP/animalbp-register-downloads/releases/download/v1.4.4/SHA256SUMS.txt)
+- [1.4.5 release notes and all assets](https://github.com/AnimalBP/animalbp-register-downloads/releases/tag/v1.4.5)
+- [1.4.5 SHA-256 checksums](https://github.com/AnimalBP/animalbp-register-downloads/releases/download/v1.4.5/SHA256SUMS.txt)
 
-The Mac app version is **1.4.4** and the matching Microsoft Store package version
-is **1.4.4.0**. Store availability follows Microsoft's certification and rollout;
-publishing a GitHub release does not publish a Store update. The release page
-records each channel's verified publication status.
+**Microsoft Store package 1.4.5.0 is published**, confirmed in Partner Center
+on 19 September 2026 UTC.
+Windows installation and the native in-app update interaction are still being
+checked separately. The public browser app and backend currently remain on
+1.4.1 while their 1.4.5 promotion checks are completed. The website update is
+also pending; a prepared build is not evidence of a completed public rollout.
 
 ## Installation and updates
 
-**Mac:** Download the DMG, verify its checksum, open it, and follow the English
-or Danish `READ ME FIRST.txt` guide to copy AnimalBP Register to Applications.
-The app is ad-hoc signed for package integrity, without an Apple Developer ID
-signature or Apple notarization. If macOS blocks it only because the developer
-cannot be verified, follow the guide's **Open Anyway** steps. Do not override a
-malware or damaged-package warning. Managed Macs may require IT approval.
-Mac updates are installed manually; automatic Mac updates are disabled.
+**Mac:** Verify the DMG checksum, open it, and follow the English or Danish
+`READ ME FIRST.txt` guide to copy AnimalBP Register to Applications. This release
+is ad-hoc signed, without an Apple Developer ID signature or Apple notarization.
+If macOS blocks it only because the developer cannot be verified, follow the
+guide's **Open Anyway** steps. Do not override a malware or damaged-package
+warning. Managed Macs may require IT approval. Updates remain manual; automatic
+Mac updates are disabled.
 
-**Windows from Microsoft Store:** Install and update through Microsoft Store.
-The Store-installed app uses Store-managed updates. Use Microsoft Store's
-Library to check for an available update.
+**Windows from Microsoft Store:** In 1.4.5, use **Check for updates** in Settings
+or Help to check Microsoft's available updates, download them through Microsoft,
+and choose when to install. Save unfinished forms first; Windows may close the
+app during installation. **Open Microsoft Store** remains available if a check
+fails. Earlier installed versions can obtain 1.4.5 through Microsoft Store;
+availability on a particular computer can depend on Store rollout and caching.
 
-**Windows installed directly from GitHub:** The release page provides a separate
-64-bit per-user installer. This channel uses **Check for Updates**, **Download
-Update**, and **Restart and install** in the app. A complete stable update
-includes the `.exe`, its `.blockmap`, and `latest.yml`. The direct installer is
-not Authenticode-signed; the update checksum verifies file integrity, not the
-publisher's identity. Organisation policies may restrict its installation.
+**Windows installed directly from GitHub:** Use the separate 64-bit per-user
+installer and the app's existing **Check for Updates**, **Download Update**, and
+**Restart and install** flow. This channel requires the matching `.exe`,
+`.blockmap`, and `latest.yml`. It is not the Store package. The direct installer
+is not Authenticode-signed; checksums verify integrity rather than publisher
+identity. Organisation policies may restrict installation.
 
-Existing workspaces and recorded data remain available. Desktop and browser
-clients connect to the same service. These downloads contain application code,
-not customer databases, backend credentials, or server signing material.
+Desktop and browser clients connect to the same service. These downloads contain
+application code, not customer databases, backend credentials, or server signing
+material. Historical releases remain available for traceability.
 
 ## Release provenance
 
-The 1.4.4 Mac and Windows packages are built from reviewed source commit
-`d2bcdb509870db301b44f45b71790f28220712ea`. Check the version-specific
-`SHA256SUMS.txt` attached to the release before opening a downloaded installer.
-Earlier releases remain available as historical records; use the latest stable
-release for a new installation.
+The release packages and matching web content are built from reviewed source
+commit `5b782350a38208d2c2629f621ffcce5c385e0838`. Check the version-specific `SHA256SUMS.txt`
+before opening a downloaded installer. The release-pinned `release-content.json`
+also binds the public app/demo and website download catalog to their reviewed
+content; labels alone do not establish publication or acceptance.

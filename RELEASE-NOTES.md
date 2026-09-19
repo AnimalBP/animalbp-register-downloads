@@ -1,39 +1,59 @@
-# AnimalBP Register 1.4.4
+# AnimalBP Register 1.4.5
 
 [Latest release](https://github.com/AnimalBP/animalbp-register-downloads/releases/latest)
-· [1.4.4 downloads and checksums](https://github.com/AnimalBP/animalbp-register-downloads/releases/tag/v1.4.4)
+· [1.4.5 downloads and checksums](https://github.com/AnimalBP/animalbp-register-downloads/releases/tag/v1.4.5)
 
-## Matching document upload form
+## Workflow improvements
 
-- The desktop **Receive goods** form now shows **Receiving note (optional)**
-  before **Comments**, in the same place as the online form.
-- **Choose File** selects a PDF or supported image before registration. The
-  selected file is attached to package 1 after the receipt is registered.
-- Replaces the desktop checkbox and the separate bottom **Upload attachment**
-  action. Cancelling the file picker keeps an existing choice; closing the
-  receipt form discards it.
-- If the optional attachment upload fails, the receipt stays registered. Use
-  **Upload document** on package 1 to retry the attachment.
-- The desktop uses the protected native file picker. Local file paths and
-  transfer credentials remain outside the app view.
+- **Windows Store updates:** Check for updates from Settings or Help. The Store
+  edition discovers updates through Microsoft, downloads them and waits for your
+  explicit installation action. Save unfinished forms before installing; Windows
+  may close the app. Open Microsoft Store remains available if a check fails.
+- **Audit history:** Usage is the default view for material, aliquot, cryovial,
+  project, document and physical storage actions. System log contains sign-ins,
+  password resets, credential changes and administration. Existing records and
+  visibility permissions are retained. CSV export includes both views and
+  clearly states its 500-event limit.
+- **Project cryovials:** Use selected vials requires at least one selected vial.
+  Cancel sits beside that button, and the corner X closes the picker. Dismissing
+  an unconfirmed selection restores No cryovial used and explains the change.
+  Canceling edits preserves an already accepted selection.
+- **Visible messages:** Errors and confirmations remain above open forms and
+  nested dialogs. Errors stay visible for ten seconds and can be dismissed.
+- **Demo and support:** The 1.4.5 demo uses the same bundle and version as the
+  1.4.5 browser app when deployed. Feedback and support include application and
+  interface versions, platform, environment and demo status. Demo feedback opens an email draft for
+  review and sending; opening the draft does not send it.
+- **Consistent downloads:** The prepared website update takes release labels,
+  installation guidance and the app download catalog from one version source.
+  Public content verification compares their exact released bytes, including
+  the website catalog.
 
-Existing workspaces and recorded data remain available. This correction does
-not migrate the database. Historical information that was not recorded is not
-inferred or invented.
+The receiving-note chooser remains inside Receive goods, before Comments,
+matching the browser form. No database migration is required for this update.
+The matching backend must be deployed before the new web interface so Usage
+filtering applies before the server's result limit.
 
-## Versions and updates
+## Versions and distribution
 
-Mac and direct Windows installers use **1.4.4**; the matching Microsoft Store
-package uses **1.4.4.0**. Microsoft Store distribution requires Microsoft's
-certification and rollout. See this release's GitHub page for verified channel
-status; GitHub publication alone does not make a Store update available.
+Mac, direct Windows installers and the matching web build use **1.4.5**. The
+corresponding Microsoft Store package uses **1.4.5.0**.
 
-Mac distribution remains manual, ad-hoc signed, and not Apple-notarized, with
-automatic Mac updates disabled. Store-installed Windows apps update through
-Microsoft Store. Direct Windows installations use the in-app updater and the
-matching `.exe`, `.blockmap`, and `latest.yml` release assets.
+**Microsoft Store package 1.4.5.0 is published**, confirmed in Partner Center
+on 19 September 2026 UTC.
+Installed-Windows acceptance and the native Store update interaction remain
+separate checks. The public browser app and backend currently remain on 1.4.1
+pending their verified 1.4.5 deployment. The matching website update is also
+pending. These notes describe the 1.4.5 changes and retain the actual rollout
+status instead of treating prepared packages as completed deployment.
 
-Built from source commit `d2bcdb509870db301b44f45b71790f28220712ea`.
-Use the `SHA256SUMS.txt` attached to the [1.4.4 release](https://github.com/AnimalBP/animalbp-register-downloads/releases/tag/v1.4.4)
-to verify downloaded files. Earlier release notes and assets remain available
-in [release history](https://github.com/AnimalBP/animalbp-register-downloads/releases).
+Mac distribution remains manual, ad-hoc signed and not Apple-notarized, with
+automatic Mac updates disabled. Store packages use Microsoft's update service
+and never the EXE updater. Direct Windows installations retain the separate
+EXE updater with matching `.exe`, `.blockmap` and `latest.yml` assets.
+
+Built from reviewed source commit `5b782350a38208d2c2629f621ffcce5c385e0838`.
+Use the `SHA256SUMS.txt` attached to the [1.4.5 release](https://github.com/AnimalBP/animalbp-register-downloads/releases/tag/v1.4.5)
+to verify files. `release-content.json` pins the corresponding production web
+build and shared app/website catalog. Earlier notes and assets remain in
+[release history](https://github.com/AnimalBP/animalbp-register-downloads/releases).
