@@ -1,11 +1,14 @@
 """Offline fixtures retain release-manifest trust independently of served files."""
 
+import base64
 import copy
 import hashlib
 import json
 import unittest
+from unittest.mock import patch
 
-from verify_web_demo import APP_CATALOG_ASSET, DEMO, WEB, WEBSITE_CATALOG, WebAlignmentPending, WebCheckError, verify_index, verify_web_demo
+import verify_web_demo as guard
+from verify_web_demo import APP_CATALOG_ASSET, DEMO, WEB, WEBSITE_CATALOG, WebsiteAccessPending, WebAlignmentPending, WebCheckError, verify_index, verify_web_demo
 
 
 # Synthetic request parameters only; no live challenge tokens are retained.
@@ -50,7 +53,7 @@ class WebDemoTests(unittest.TestCase):
         self.config = {"version": self.version, "environment": "production", "demoMode": False, "apiBaseUrl": "https://api.animalbp.com"}
         self.config_bytes = b"globalThis.ABP_CONFIG = Object.freeze(" + encode(self.config) + b");\n"
         html = ('<!doctype html><html><body><script src="./config.js"></script><link rel="stylesheet" href="./styles.css?v=1.4.5">'
-                '<script type="module" src="./' + self.app_asset + '?ui=shared"></script></body>\n</html>\n\n').encode()
+                '<script type="module" src="./' + self.app_asset + '?ui=shared"></script></body>\n</html>\n').encode()
         assets = {name: digest(body) for name, body in sorted(files.items())}
         self.manifest = {
             "schema_version": 1, "scope": "public-web-and-demo", "version": self.version, "environment": "production",
@@ -133,6 +136,105 @@ class WebDemoTests(unittest.TestCase):
                 with self.assertRaisesRegex(WebCheckError, "differs.*content"):
                     self.verify()
                 self.responses[url] = old
+
+    def add_analytics(self):
+        self.add_precursor()
+        for page in [WEB, DEMO]:
+            self.responses[page] = self.responses[page].replace(b"</body>\n</html>\n", guard._ANALYTICS_TAIL)
+
+    def test_exact_reviewed_analytics_and_tail_restore_original_index(self):
+        self.add_analytics()
+        for page in [WEB, DEMO]:
+            result = verify_index(self.responses[page], self.manifest["web_index_sha256"])
+            self.assertEqual(result["removed_analytics_count"], 1)
+            self.assertTrue(result["exact_analytics_tail_reconstructed"])
+            self.assertEqual(result["normalization"], "cloudflare-precursor-and-analytics-v1")
+            self.assertEqual(result["normalized_sha256"], self.manifest["web_index_sha256"])
+
+    def test_second_observed_order_accepts_only_exact_analytics_newline_before_precursor(self):
+        original = self.responses[WEB]
+        served = original.replace(b"</body>", guard._ANALYTICS + b"\n" + PRECURSOR + b"</body>")
+        result = verify_index(served, digest(original))
+        self.assertEqual(result["edge_script_order"], "analytics-precursor")
+        for gap in [b"", b"\n\n", b" ", b"<script>alert(1)</script>"]:
+            with self.subTest(gap=gap):
+                with self.assertRaises(WebCheckError):
+                    verify_index(original.replace(b"</body>", guard._ANALYTICS + gap + PRECURSOR + b"</body>"), digest(original))
+
+    def test_analytics_integrity_is_fetched_and_checked_separately_from_app_assets(self):
+        self.add_analytics()
+        body = b"synthetic analytics test bytes"
+        self.responses[guard.ANALYTICS_URL] = body
+        # Offline bytes have their own SRI; production pins remain literal.
+        sri = "sha512-" + base64.b64encode(hashlib.sha512(body).digest()).decode()
+        with patch.object(guard, "ANALYTICS_SRI", sri):
+            result = self.verify()
+        self.assertEqual(result["edge_analytics"]["status"], "integrity_verified")
+        self.assertFalse(result["edge_analytics"]["account_activation_verified"])
+        self.assertEqual(result["runtime_assets_verified"], 5)
+        self.assertEqual(result["runtime_urls_verified"], 8)
+        self.assertIn(guard.ANALYTICS_URL, self.requests)
+        with self.assertRaisesRegex(WebCheckError, "reviewed SRI"):
+            self.verify()
+
+    def test_analytics_recognition_cannot_authorize_changed_runtime_query(self):
+        self.add_analytics()
+        body = b"synthetic analytics test bytes"
+        self.responses[guard.ANALYTICS_URL] = body
+        self.responses[WEB + "helper.js?ui=shared"] = b"changed runtime"
+        sri = "sha512-" + base64.b64encode(hashlib.sha512(body).digest()).decode()
+        with patch.object(guard, "ANALYTICS_SRI", sri):
+            with self.assertRaisesRegex(WebCheckError, "Actual browser query URL differs"):
+                self.verify()
+
+    def test_analytics_allowance_rejects_unknown_script_token_sri_code_and_position(self):
+        original = self.responses[WEB]
+        self.add_analytics()
+        served = self.responses[WEB]
+        changes = [
+            (b"0d712fc37bc2466db5fdc49650594205", b"0" * 32),
+            (b"beacon.min.js/v31", b"other.min.js/v31"),
+            (b"static.cloudflareinsights.com", b"evil.invalid"),
+            (b"sha512-iIg7", b"sha512-AAAA"),
+            (b'"spa":2', b'"spa":3'), (b'"r":1', b'"r":2'),
+            (b'crossorigin="anonymous"', b'onload="alert(1)"'),
+            (b"</body>\n</html>\n", b"</body>\n</html>\n\n"),
+            (guard._ANALYTICS, guard._ANALYTICS * 2),
+        ]
+        for before, after in changes:
+            with self.subTest(before=before):
+                with self.assertRaises(WebCheckError):
+                    verify_index(served.replace(before, after), digest(original))
+        for changed in [served + b"<!-- extra -->", guard._ANALYTICS + served,
+                        served.replace(PRECURSOR, b""),
+                        served.replace(PRECURSOR, PRECURSOR + b"<script>alert(1)</script>")]:
+            with self.assertRaises(WebCheckError):
+                verify_index(changed, digest(original))
+
+    def test_catalog_access_boundary_retains_verified_app_evidence_without_full_parity(self):
+        original_fetch = self.fetch
+        def protected_fetch(url):
+            if url == WEBSITE_CATALOG:
+                raise WebsiteAccessPending("Catalog requires authentication")
+            return original_fetch(url)
+        with self.assertRaises(WebsiteAccessPending) as caught:
+            verify_web_demo(self.repo, self.release, protected_fetch)
+        result = caught.exception.web_demo_result
+        self.assertEqual(result["status"], "pending")
+        self.assertFalse(result["parity_verified"])
+        self.assertTrue(result["web_content_verified"])
+        self.assertEqual(result["runtime_urls_verified"], 8)
+        self.assertEqual(result["website_catalog"]["status"], "access_pending")
+
+    def test_unknown_catalog_html_is_failure_not_an_access_exception(self):
+        self.responses[WEBSITE_CATALOG] = b"<html>unrecognized page</html>"
+        with self.assertRaises(WebCheckError) as caught:
+            self.verify()
+        result = caught.exception.web_demo_result
+        self.assertEqual(result["status"], "failed")
+        self.assertFalse(result["parity_verified"])
+        self.assertTrue(result["web_content_verified"])
+        self.assertEqual(result["website_catalog"]["status"], "failed")
 
     def test_unknown_injection_or_changed_application_html_still_fails(self):
         original = self.responses[WEB]
@@ -263,7 +365,7 @@ class WebDemoTests(unittest.TestCase):
 
     def test_demo_cannot_load_a_different_application(self):
         self.responses[DEMO] += b"<script src='./old-demo.js'></script>"
-        with self.assertRaisesRegex(WebCheckError, "same configuration and scripts"):
+        with self.assertRaisesRegex(WebCheckError, "Web/demo HTML differs"):
             self.verify()
 
     def test_beta_static_demo_and_foreign_api_configs_are_not_public_parity(self):
