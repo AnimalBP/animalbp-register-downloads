@@ -4,6 +4,7 @@ The caller first validates root/release SHA256SUMS and GitHub asset digests.
 The served web manifest is never accepted as its own trust anchor.
 """
 
+import base64
 import hashlib
 from html.parser import HTMLParser
 import json
@@ -18,6 +19,19 @@ MANIFEST_NAME = "release-content.json"
 WEBSITE_CATALOG = "https://animalbp.com/downloads.json"
 APP_CATALOG_ASSET = "assets/desktop-downloads.json"
 STABLE_VERSION = r"(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)"
+
+# The one observed Cloudflare Precursor bootstrap, not a general script filter.
+# Only request identifiers vary; every executable byte and the same-origin
+# script path are literal. A future Cloudflare change must fail for review.
+_PRECURSOR = re.compile(
+    re.escape(b"<script>window.__CF$cv$params={r:'") + rb"[0-9a-f]{16}"
+    + re.escape(b"',t:'") + rb"(?P<time>[A-Za-z0-9+/]{14}==)"
+    + re.escape(b"',u:'") + rb"[0-9a-f]{32}"
+    + re.escape(b"',ut:'") + rb"[A-Za-z0-9_.-]{43}-(?P<ut_time>[0-9]{10})-1\.2\.1\.1-[A-Za-z0-9_.-]{107}"
+    + re.escape(b"',i:60};(function(){if(!document.body)return;var s=document.createElement('script');"
+                b"s.src='/cdn-cgi/challenge-platform/scripts/precursor/main.js';"
+                b"document.head.appendChild(s);})();</script>")
+)
 
 
 class WebCheckError(ValueError):
@@ -35,6 +49,31 @@ def require(condition, message):
 
 def digest(data):
     return hashlib.sha256(data).hexdigest()
+
+
+def verify_index(html, expected_sha256):
+    """Require original pinned bytes after at most one exact edge bootstrap."""
+    raw_digest = digest(html)
+    normalized, removed = html, 0
+    if raw_digest != expected_sha256:
+        require(len(html) <= 256 * 1024, "Web/demo HTML exceeds the bounded edge readback size")
+        matches = list(_PRECURSOR.finditer(html))
+        require(len(matches) == 1, "Web/demo HTML differs: no unique recognized Cloudflare bootstrap")
+        match = matches[0]
+        require(re.fullmatch(rb"</body>[ \t\r\n]{0,8}</html>[ \t\r\n]{0,8}", html[match.end():]) is not None,
+                "Cloudflare bootstrap must occur immediately before the final closing body")
+        # Canonical base64 encoding of the same decimal timestamp carried by ut.
+        require(base64.b64encode(match["ut_time"]) == match["time"],
+                "Cloudflare bootstrap timestamp fields are inconsistent")
+        normalized = html[:match.start()] + html[match.end():]
+        removed = 1
+    normalized_digest = digest(normalized)
+    require(normalized_digest == expected_sha256,
+            "Web/demo HTML differs from the release-pinned content manifest after exact edge normalization")
+    return {"raw_sha256": raw_digest, "normalized_sha256": normalized_digest,
+            "release_index_sha256": expected_sha256,
+            "normalization": "cloudflare-precursor-bootstrap-v1" if removed else "none",
+            "removed_bootstrap_count": removed, "removed_bytes": len(html) - len(normalized)}
 
 
 def json_object(data, label):
@@ -168,8 +207,8 @@ def verify_web_demo(repo, release, fetch):
         raise WebAlignmentPending(f"GitHub {version} is published; web/demo is {config.get('version')}. "
                                   "An approved early GitHub release window is pending deployment alignment, not verified parity.")
     require(digest(config_bytes) == manifest["web_config_sha256"], "Public config differs from the release-pinned content manifest")
-    require(digest(web) == manifest["web_index_sha256"] and digest(demo) == manifest["web_index_sha256"],
-            "Web/demo HTML differs from the release-pinned content manifest")
+    indexes = {"web": verify_index(web, manifest["web_index_sha256"]),
+               "demo": verify_index(demo, manifest["web_index_sha256"])}
     require(any(urlsplit(url).path == "/" + manifest["app_asset"] for url in web_page.scripts),
             "Public HTML does not load the release-pinned application")
     require(json_object(fetch(WEB + MANIFEST_NAME), "Served content manifest") == manifest,
@@ -201,5 +240,6 @@ def verify_web_demo(repo, release, fetch):
             "release_manifest_asset_id": asset["id"], "release_manifest_sha256": digest(raw_manifest),
             "shared_content_sha256": manifest["shared_content_sha256"],
             "runtime_assets_verified": len(bodies), "runtime_urls_verified": sum(map(len, urls.values())),
+            "html_readback": indexes,
             "website_catalog": website_catalog,
             "scope": "Public web/demo bytes and website catalog only; no demo session, backend or Store acceptance inferred"}

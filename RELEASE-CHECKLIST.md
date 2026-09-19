@@ -25,6 +25,15 @@ corresponds to **1.4.4.0**.
   verifies public web/demo bytes and `https://animalbp.com/downloads.json`
   against this release-pinned app catalog; the website cannot authorize its
   own changed content by serving a matching version label.
+- Cloudflare may append its Precursor security bootstrap to the HTML response.
+  The guard accepts only the reviewed literal bootstrap immediately before the
+  final closing body, once, with bounded request fields and its fixed same-origin
+  script path. It removes only that recognized addition for comparison with the
+  original release-pinned HTML digest. Reports retain both raw and normalized
+  hashes. Any changed bootstrap, extra HTML or script, or changed application
+  asset still fails; runtime and query URL hashes remain mandatory. This checks
+  application content, not the dynamically served Cloudflare security script.
+  Do not disable Cloudflare protections or weaken CSP to make this check pass.
 - Upload the matching Windows Store package and copy the reviewed Store
   release notes into Partner Center. Save, reload, and compare the saved notes
   with the reviewed text. Record the submission ID, package version, and actual
