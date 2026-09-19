@@ -5,7 +5,16 @@ import hashlib
 import json
 import unittest
 
-from verify_web_demo import APP_CATALOG_ASSET, DEMO, WEB, WEBSITE_CATALOG, WebAlignmentPending, WebCheckError, verify_web_demo
+from verify_web_demo import APP_CATALOG_ASSET, DEMO, WEB, WEBSITE_CATALOG, WebAlignmentPending, WebCheckError, verify_index, verify_web_demo
+
+
+# Synthetic request parameters only; no live challenge tokens are retained.
+PRECURSOR = (b"<script>window.__CF$cv$params={r:'0123456789abcdef',t:'MTcwMDAwMDAwMA==',"
+             b"u:'0123456789abcdef0123456789abcdef',ut:'" + b"a" * 43
+             + b"-1700000000-1.2.1.1-" + b"b" * 107
+             + b"',i:60};(function(){if(!document.body)return;var s=document.createElement('script');"
+             b"s.src='/cdn-cgi/challenge-platform/scripts/precursor/main.js';"
+             b"document.head.appendChild(s);})();</script>")
 
 
 def digest(data):
@@ -40,8 +49,8 @@ class WebDemoTests(unittest.TestCase):
                  APP_CATALOG_ASSET: self.catalog_bytes}
         self.config = {"version": self.version, "environment": "production", "demoMode": False, "apiBaseUrl": "https://api.animalbp.com"}
         self.config_bytes = b"globalThis.ABP_CONFIG = Object.freeze(" + encode(self.config) + b");\n"
-        html = ('<script src="./config.js"></script><link rel="stylesheet" href="./styles.css?v=1.4.5">'
-                '<script type="module" src="./' + self.app_asset + '?ui=shared"></script>').encode()
+        html = ('<!doctype html><html><body><script src="./config.js"></script><link rel="stylesheet" href="./styles.css?v=1.4.5">'
+                '<script type="module" src="./' + self.app_asset + '?ui=shared"></script></body>\n</html>\n\n').encode()
         assets = {name: digest(body) for name, body in sorted(files.items())}
         self.manifest = {
             "schema_version": 1, "scope": "public-web-and-demo", "version": self.version, "environment": "production",
@@ -93,6 +102,81 @@ class WebDemoTests(unittest.TestCase):
                          "url": WEBSITE_CATALOG, "sha256": digest(self.catalog_bytes)})
         self.assertIn(WEBSITE_CATALOG, self.requests)
         self.assertFalse(any("/auth/" in url or "#demo=" in url for url in self.requests))
+        self.assertEqual(result["html_readback"]["web"]["normalization"], "none")
+
+    def add_precursor(self):
+        for page in [WEB, DEMO]:
+            script = PRECURSOR if page == WEB else PRECURSOR.replace(b"0123456789abcdef'", b"fedcba9876543210'")
+            self.responses[page] = self.responses[page].replace(b"</body>", script + b"</body>")
+
+    def test_exact_edge_bootstrap_retains_original_release_anchor_and_reports_raw_hashes(self):
+        self.add_precursor()
+        result = self.verify()
+        for name, page in [("web", WEB), ("demo", DEMO)]:
+            report = result["html_readback"][name]
+            self.assertEqual(report["raw_sha256"], digest(self.responses[page]))
+            self.assertNotEqual(report["raw_sha256"], report["normalized_sha256"])
+            self.assertEqual(report["normalized_sha256"], self.manifest["web_index_sha256"])
+            self.assertEqual(report["removed_bootstrap_count"], 1)
+            self.assertEqual(report["removed_bytes"], len(PRECURSOR))
+            self.assertEqual(report["normalization"], "cloudflare-precursor-bootstrap-v1")
+        self.assertNotEqual(result["html_readback"]["web"]["raw_sha256"], result["html_readback"]["demo"]["raw_sha256"])
+        self.assertEqual(result["runtime_assets_verified"], 5)
+        self.assertEqual(result["runtime_urls_verified"], 8)
+
+    def test_edge_normalization_does_not_relax_asset_or_actual_query_checks(self):
+        self.add_precursor()
+        for url in [WEB + "helper.js", WEB + "helper.js?ui=shared"]:
+            with self.subTest(url=url):
+                old = self.responses[url]
+                self.responses[url] = b"unreviewed executable code"
+                with self.assertRaisesRegex(WebCheckError, "differs.*content"):
+                    self.verify()
+                self.responses[url] = old
+
+    def test_unknown_injection_or_changed_application_html_still_fails(self):
+        original = self.responses[WEB]
+        for extra in [b"<script>alert(1)</script>", b"<img src=x onerror=alert(1)>", b"<!-- unknown addition -->"]:
+            with self.subTest(extra=extra):
+                served = original.replace(b"</body>", extra + PRECURSOR + b"</body>")
+                with self.assertRaisesRegex(WebCheckError, "after exact edge normalization"):
+                    verify_index(served, digest(original))
+        changed = original.replace(b"<!doctype html>", b"<!doctype html>changed")
+        with self.assertRaisesRegex(WebCheckError, "after exact edge normalization"):
+            verify_index(changed.replace(b"</body>", PRECURSOR + b"</body>"), digest(original))
+
+    def test_bootstrap_code_position_count_and_typed_parameters_are_fail_closed(self):
+        original = self.responses[WEB]
+        replacements = [
+            (b"precursor/main.js", b"other/main.js"),
+            (b"s.src='/cdn-cgi/", b"s.src='https://evil.invalid/cdn-cgi/"),
+            (b"document.head.appendChild(s);", b"document.head.appendChild(s);alert(1);"),
+            (b"<script>", b"<script nonce='anything'>"),
+            (b"r:'0123456789abcdef'", b"r:'0123456789abcdef0'"),
+            (b"u:'0123456789abcdef0123456789abcdef'", b"u:'wrong'"),
+            (b"MTcwMDAwMDAwMA==", b"MTcwMDAwMDAwMQ=="),
+            (b"-1700000000-", b"-17000000000-"),
+            (b"-1.2.1.1-", b"-1.2.1.2-"),
+            (b"a" * 43, b"a" * 44),
+            (b"b" * 107, b"b" * 108),
+            (b"b" * 107, b"b" * 106 + b"'"),
+            (b"i:60", b"i:61"),
+        ]
+        for before, after in replacements:
+            with self.subTest(before=before):
+                with self.assertRaises(WebCheckError):
+                    verify_index(original.replace(b"</body>", PRECURSOR.replace(before, after) + b"</body>"), digest(original))
+        for served in [
+            original.replace(b"</body>", PRECURSOR * 2 + b"</body>"),
+            PRECURSOR + original,
+            original + PRECURSOR,
+            original.replace(b"</body>", PRECURSOR + b"\n</body>"),
+            original.replace(b"</body>", PRECURSOR + b"</body>") + b"<script>alert(1)</script>",
+            b"x" * (256 * 1024) + PRECURSOR + b"</body>\n</html>\n",
+        ]:
+            with self.subTest(served_tail=served[-60:]):
+                with self.assertRaises(WebCheckError):
+                    verify_index(served, digest(original))
 
     def test_release_download_must_match_its_api_digest_and_size(self):
         for field, value in [("digest", "sha256:" + "f" * 64), ("size", 0), ("state", "new"), ("id", True)]:
