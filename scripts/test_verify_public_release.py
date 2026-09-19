@@ -2,12 +2,52 @@
 
 import copy
 import hashlib
+import io
 import unittest
+from unittest.mock import patch
 
-from verify_public_release import ReleaseError, expected_assets, validate_release
+from verify_public_release import ReleaseError, expected_assets, fetch, validate_release
+from verify_web_demo import ANALYTICS_URL, WEBSITE_CATALOG, WebsiteAccessPending
 
 
 class PublicReleaseTests(unittest.TestCase):
+    def test_pinned_analytics_fetch_refuses_any_redirect_target_change(self):
+        class Response(io.BytesIO):
+            def __init__(self, final):
+                super().__init__(b"synthetic bytes")
+                self.final = final
+            def geturl(self):
+                return self.final
+        for target in [ANALYTICS_URL.replace("static.cloudflareinsights.com", "foreign.invalid"),
+                       ANALYTICS_URL + "?changed=1", ANALYTICS_URL + "/changed"]:
+            with self.subTest(target=target):
+                with patch("verify_public_release.urlopen", return_value=Response(target)):
+                    with self.assertRaisesRegex(ReleaseError, "must not redirect"):
+                        fetch(ANALYTICS_URL)
+        with patch("verify_public_release.urlopen", return_value=Response(ANALYTICS_URL)):
+            self.assertEqual(fetch(ANALYTICS_URL), b"synthetic bytes")
+
+    def test_only_exact_known_catalog_access_redirect_is_reported_as_pending(self):
+        class Response(io.BytesIO):
+            def __init__(self, final):
+                super().__init__(b"<html>login</html>")
+                self.final = final
+            def geturl(self):
+                return self.final
+        access = "https://animalbp.cloudflareaccess.com/cdn-cgi/access/login/animalbp.com?synthetic=not-retained"
+        with patch("verify_public_release.urlopen", return_value=Response(access)):
+            with self.assertRaises(WebsiteAccessPending) as caught:
+                fetch(WEBSITE_CATALOG)
+        self.assertNotIn("synthetic", str(caught.exception))
+        for original, final in [
+            ("https://app.animalbp.com/", access),
+            (WEBSITE_CATALOG, access.replace("animalbp.cloudflareaccess.com", "foreign.invalid")),
+            (WEBSITE_CATALOG, access.replace("/login/animalbp.com", "/unknown")),
+        ]:
+            with self.subTest(original=original, final=final):
+                with patch("verify_public_release.urlopen", return_value=Response(final)):
+                    self.assertEqual(fetch(original), b"<html>login</html>")
+
     def setUp(self):
         self.repo = "AnimalBP/animalbp-register-downloads"
         base = f"https://github.com/{self.repo}/releases"

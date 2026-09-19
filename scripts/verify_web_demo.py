@@ -32,6 +32,15 @@ _PRECURSOR = re.compile(
                 b"s.src='/cdn-cgi/challenge-platform/scripts/precursor/main.js';"
                 b"document.head.appendChild(s);})();</script>")
 )
+ANALYTICS_URL = "https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495"
+ANALYTICS_SRI = "sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg=="
+# Exact reviewed public addition and token, not a wildcard for vendor scripts.
+# Account-side activation attribution was unavailable; this is an explicit
+# allowance of these observed, integrity-verified bytes, not a config claim.
+_ANALYTICS = (f'<script type="module" src="{ANALYTICS_URL}" integrity="{ANALYTICS_SRI}" '
+              'data-cf-beacon=\'{"version":"2024.11.0","token":"0d712fc37bc2466db5fdc49650594205",'
+              '"r":1,"spa":2}\' crossorigin="anonymous"></script>').encode()
+_ANALYTICS_TAIL = _ANALYTICS + b"\n</body>\n</html>\n"
 
 
 class WebCheckError(ValueError):
@@ -39,6 +48,10 @@ class WebCheckError(ValueError):
 
 
 class WebAlignmentPending(WebCheckError):
+    pass
+
+
+class WebsiteAccessPending(WebAlignmentPending):
     pass
 
 
@@ -51,29 +64,56 @@ def digest(data):
     return hashlib.sha256(data).hexdigest()
 
 
-def verify_index(html, expected_sha256):
+def normalize_index(html, expected_sha256):
     """Require original pinned bytes after at most one exact edge bootstrap."""
     raw_digest = digest(html)
-    normalized, removed = html, 0
+    normalized, removed, analytics, edge_order = html, 0, 0, None
     if raw_digest != expected_sha256:
         require(len(html) <= 256 * 1024, "Web/demo HTML exceeds the bounded edge readback size")
         matches = list(_PRECURSOR.finditer(html))
         require(len(matches) == 1, "Web/demo HTML differs: no unique recognized Cloudflare bootstrap")
         match = matches[0]
-        require(re.fullmatch(rb"</body>[ \t\r\n]{0,8}</html>[ \t\r\n]{0,8}", html[match.end():]) is not None,
-                "Cloudflare bootstrap must occur immediately before the final closing body")
         # Canonical base64 encoding of the same decimal timestamp carried by ut.
         require(base64.b64encode(match["ut_time"]) == match["time"],
                 "Cloudflare bootstrap timestamp fields are inconsistent")
-        normalized = html[:match.start()] + html[match.end():]
+        before, after = html[:match.start()], html[match.end():]
+        # Both exact orders were observed in real responses. Reverse only these
+        # terminal byte sequences, including the one analytics newline.
+        if after == _ANALYTICS_TAIL:
+            normalized = before + b"</body>\n</html>\n"
+            analytics, edge_order = 1, "precursor-analytics"
+        elif before.endswith(_ANALYTICS + b"\n") and after == b"</body>\n</html>\n":
+            normalized = before[:-len(_ANALYTICS)-1] + after
+            analytics, edge_order = 1, "analytics-precursor"
+        else:
+            require(re.fullmatch(rb"</body>[ \t\r\n]{0,8}</html>[ \t\r\n]{0,8}", after) is not None,
+                    "Cloudflare bootstrap must occur immediately before the final closing body")
+            normalized = before + after
+        if analytics:
+            require(html.count(_ANALYTICS) == 1, "Duplicate reviewed analytics additions are not accepted")
         removed = 1
     normalized_digest = digest(normalized)
     require(normalized_digest == expected_sha256,
             "Web/demo HTML differs from the release-pinned content manifest after exact edge normalization")
-    return {"raw_sha256": raw_digest, "normalized_sha256": normalized_digest,
+    return normalized, {"raw_sha256": raw_digest, "normalized_sha256": normalized_digest,
             "release_index_sha256": expected_sha256,
-            "normalization": "cloudflare-precursor-bootstrap-v1" if removed else "none",
-            "removed_bootstrap_count": removed, "removed_bytes": len(html) - len(normalized)}
+            "normalization": "cloudflare-precursor-and-analytics-v1" if analytics else "cloudflare-precursor-bootstrap-v1" if removed else "none",
+            "removed_bootstrap_count": removed, "removed_analytics_count": analytics,
+            "edge_script_order": edge_order,
+            "exact_analytics_tail_reconstructed": bool(analytics), "removed_bytes": len(html) - len(normalized)}
+
+
+def verify_index(html, expected_sha256):
+    return normalize_index(html, expected_sha256)[1]
+
+
+def verify_analytics(fetch):
+    body = fetch(ANALYTICS_URL)
+    require(len(body) <= 128 * 1024
+            and "sha512-" + base64.b64encode(hashlib.sha512(body).digest()).decode() == ANALYTICS_SRI,
+            "Observed Cloudflare analytics script differs from the explicitly reviewed SRI")
+    return {"url": ANALYTICS_URL, "sha256": digest(body), "sri": ANALYTICS_SRI,
+            "status": "integrity_verified", "account_activation_verified": False}
 
 
 def json_object(data, label):
@@ -194,9 +234,6 @@ def verify_web_demo(repo, release, fetch):
     manifest = json_object(raw_manifest, "Release content manifest")
     validate_manifest(manifest, version)
     web, demo = fetch(WEB), fetch(DEMO)
-    web_page, demo_page = Resources(web, WEB), Resources(demo, DEMO)
-    require(web_page.scripts == demo_page.scripts and WEB + "config.js" in web_page.scripts,
-            "Normal web and demo must load the same configuration and scripts")
     config_bytes = fetch(WEB + "config.js")
     match = re.fullmatch(rb"globalThis\.ABP_CONFIG = Object\.freeze\((.*)\);\s*", config_bytes, flags=re.DOTALL)
     require(match is not None, "Public config is not a generated ABP_CONFIG object")
@@ -207,8 +244,13 @@ def verify_web_demo(repo, release, fetch):
         raise WebAlignmentPending(f"GitHub {version} is published; web/demo is {config.get('version')}. "
                                   "An approved early GitHub release window is pending deployment alignment, not verified parity.")
     require(digest(config_bytes) == manifest["web_config_sha256"], "Public config differs from the release-pinned content manifest")
-    indexes = {"web": verify_index(web, manifest["web_index_sha256"]),
-               "demo": verify_index(demo, manifest["web_index_sha256"])}
+    web, web_index = normalize_index(web, manifest["web_index_sha256"])
+    demo, demo_index = normalize_index(demo, manifest["web_index_sha256"])
+    indexes = {"web": web_index, "demo": demo_index}
+    edge = verify_analytics(fetch) if any(item["removed_analytics_count"] for item in indexes.values()) else None
+    web_page, demo_page = Resources(web, WEB), Resources(demo, DEMO)
+    require(web_page.scripts == demo_page.scripts and WEB + "config.js" in web_page.scripts,
+            "Normal web and demo must load the same configuration and scripts")
     require(any(urlsplit(url).path == "/" + manifest["app_asset"] for url in web_page.scripts),
             "Public HTML does not load the release-pinned application")
     require(json_object(fetch(WEB + MANIFEST_NAME), "Served content manifest") == manifest,
@@ -235,11 +277,20 @@ def verify_web_demo(repo, release, fetch):
     for name, variants in urls.items():
         for url in variants - {WEB + name}:
             require(digest(fetch(url)) == manifest["assets"][name], f"Actual browser query URL differs from release content: {name}")
-    website_catalog = verify_website_catalog(bodies[APP_CATALOG_ASSET], manifest["assets"][APP_CATALOG_ASSET], version, fetch)
-    return {"status": "passed", "version": version, "parity_verified": True,
+    result = {"status": "passed", "version": version, "parity_verified": True,
             "release_manifest_asset_id": asset["id"], "release_manifest_sha256": digest(raw_manifest),
             "shared_content_sha256": manifest["shared_content_sha256"],
             "runtime_assets_verified": len(bodies), "runtime_urls_verified": sum(map(len, urls.values())),
             "html_readback": indexes,
-            "website_catalog": website_catalog,
+            "edge_analytics": edge, "web_content_verified": True,
             "scope": "Public web/demo bytes and website catalog only; no demo session, backend or Store acceptance inferred"}
+    try:
+        result["website_catalog"] = verify_website_catalog(bodies[APP_CATALOG_ASSET], manifest["assets"][APP_CATALOG_ASSET], version, fetch)
+    except (WebCheckError, OSError) as error:
+        pending = isinstance(error, WebAlignmentPending)
+        result.update(status="pending" if pending else "failed", parity_verified=False,
+                      website_catalog={"status": "access_pending" if isinstance(error, WebsiteAccessPending) else "pending" if pending else "failed",
+                                       "url": WEBSITE_CATALOG, "verified": False})
+        error.web_demo_result = result
+        raise
+    return result

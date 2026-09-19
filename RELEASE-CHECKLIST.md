@@ -34,6 +34,17 @@ corresponds to **1.4.4.0**.
   asset still fails; runtime and query URL hashes remain mandatory. This checks
   application content, not the dynamically served Cloudflare security script.
   Do not disable Cloudflare protections or weaken CSP to make this check pass.
+- The separately reviewed Cloudflare Web Analytics addition is allowed only
+  with its exact public token, URL, SRI, attributes and closing-tail bytes.
+  The guard fetches that script and verifies its pinned SRI on each affected
+  check. Its observed vendor attribution is supported by the official script
+  and integrity readback; account-side activation has not been verified.
+  Unknown additions and any other tail changes fail. The application digest
+  and runtime URL checks remain independent of this explicit edge allowance.
+- If the website catalog redirects to the known Cloudflare Access login,
+  the guard returns `PENDING` (exit 2). It retains completed app/web/demo byte
+  checks separately, with overall parity false and catalog verification pending.
+  A login page is never accepted as the catalog, and unknown HTML still fails.
 - Upload the matching Windows Store package and copy the reviewed Store
   release notes into Partner Center. Save, reload, and compare the saved notes
   with the reviewed text. Record the submission ID, package version, and actual

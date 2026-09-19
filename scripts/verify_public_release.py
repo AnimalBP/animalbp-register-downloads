@@ -11,9 +11,10 @@ from pathlib import Path
 import re
 import sys
 from urllib.error import HTTPError, URLError
+from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
 
-from verify_web_demo import WebAlignmentPending, WebCheckError, verify_web_demo
+from verify_web_demo import ANALYTICS_URL, WEBSITE_CATALOG, WebsiteAccessPending, WebAlignmentPending, WebCheckError, verify_web_demo
 
 
 STABLE_TAG = re.compile(r"v((?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*))")
@@ -127,6 +128,13 @@ def fetch(url: str, token: str | None = None) -> bytes:
                         "Accept": "application/vnd.github+json",
                         "X-GitHub-Api-Version": "2022-11-28"})
     with urlopen(Request(url, headers=headers), timeout=30) as response:
+        require(url != ANALYTICS_URL or response.geturl() == ANALYTICS_URL,
+                "Reviewed analytics URL must not redirect to a different host, path or query")
+        final = urlsplit(response.geturl())
+        if (url == WEBSITE_CATALOG and final.scheme == "https"
+                and final.netloc == "animalbp.cloudflareaccess.com"
+                and final.path == "/cdn-cgi/access/login/animalbp.com"):
+            raise WebsiteAccessPending("The public website catalog requires Cloudflare Access authentication; anonymous catalog parity is not verified.")
         data = response.read(2_000_001)
     require(len(data) <= 2_000_000, "Release metadata exceeds the size limit")
     return data
@@ -160,10 +168,14 @@ def main() -> int:
         return 0
     except WebAlignmentPending as error:
         print(f"PENDING: {error}", file=sys.stderr)
+        if hasattr(error, "web_demo_result"):
+            print(json.dumps({"github_version": version, "web_demo": error.web_demo_result}, sort_keys=True))
         return 2
     except (ReleaseError, WebCheckError, OSError, HTTPError, URLError, KeyError, TypeError,
             UnicodeError, json.JSONDecodeError) as error:
         print(f"FAIL: {error}", file=sys.stderr)
+        if hasattr(error, "web_demo_result"):
+            print(json.dumps({"github_version": version, "web_demo": error.web_demo_result}, sort_keys=True))
         return 1
 
 
