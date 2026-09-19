@@ -24,8 +24,9 @@ the backend passed readiness and data-preservation checks. Final automated
 web/demo content verification remains in progress.
 
 The website's 1.4.5 deployment and download catalog are verified. Its existing
-Cloudflare Access sign-in remains in place. The owner checked the authenticated
-website's Mac 1.4.5 choice, installation guidance and Microsoft Store destination.
+Cloudflare Access sign-in remains in place. The authenticated website was
+checked for the Mac 1.4.5 choice, installation guidance and Microsoft Store
+destination.
 
 An installed Windows test device is currently unavailable. The package and
 listing are verified, and an isolated direct-installer upgrade passed, but the
