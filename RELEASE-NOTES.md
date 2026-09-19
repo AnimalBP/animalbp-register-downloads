@@ -44,7 +44,9 @@ corresponding Microsoft Store package uses **1.4.5.0**.
 nine public GitHub assets passed download and checksum verification. The backend
 and browser/demo are deployed as 1.4.5. Backend readiness, existing business data
 and attachments were verified; no schema migration or credential rotation was
-performed. Final automated web/demo content verification remains in progress.
+performed. The web/demo application content matches the release-pinned
+manifest across 13 assets and 20 runtime URLs. Observed Cloudflare additions
+were checked separately against reviewed script bytes and integrity values.
 
 The website's 1.4.5 deployment and catalog are verified. Existing Cloudflare
 Access protection remains in place. The authenticated website was checked for

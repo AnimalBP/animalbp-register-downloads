@@ -20,8 +20,10 @@ version as 1.4.5.0.
 **Release status, 19 September 2026 UTC:** GitHub 1.4.5 and Microsoft Store
 1.4.5.0 are published. All nine public GitHub assets have passed download and
 checksum verification. The backend and browser/demo have been deployed as 1.4.5;
-the backend passed readiness and data-preservation checks. Final automated
-web/demo content verification remains in progress.
+the backend passed readiness and data-preservation checks. The web/demo
+application content matches the release-pinned manifest across 13 assets and
+20 runtime URLs. Observed Cloudflare additions were checked separately against
+reviewed script bytes and integrity values.
 
 The website's 1.4.5 deployment and download catalog are verified. Its existing
 Cloudflare Access sign-in remains in place. The authenticated website was
