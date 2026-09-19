@@ -3,10 +3,13 @@
 import copy
 import hashlib
 import io
+import json
+from pathlib import Path
+import tempfile
 import unittest
 from unittest.mock import patch
 
-from verify_public_release import ReleaseError, expected_assets, fetch, validate_release
+from verify_public_release import ReleaseError, expected_assets, fetch, main, validate_release
 from verify_web_demo import ANALYTICS_URL, WEBSITE_CATALOG, WebsiteAccessPending
 
 
@@ -79,6 +82,19 @@ class PublicReleaseTests(unittest.TestCase):
 
     def test_complete_matching_release_passes(self):
         self.assertEqual(self.validate(), "1.4.4")
+
+    def test_cli_rejects_a_dangling_policy_link_instead_of_silently_selecting_direct_mode(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for name, body in self.documents.items(): (root / name).write_bytes(body)
+            (root / "website-verification-policy.json").symlink_to(root / "missing-policy.json")
+            with patch("sys.argv", ["verify", "--repo", self.repo, "--root", str(root)]), \
+                 patch("verify_public_release.fetch", side_effect=[json.dumps(self.release).encode(), self.checksums, self.updater]), \
+                 patch("verify_public_release.verify_web_demo") as web, \
+                 patch("sys.stdout", new_callable=io.StringIO), patch("sys.stderr", new_callable=io.StringIO) as errors:
+                self.assertEqual(main(), 1)
+                self.assertIn("bounded regular repository file", errors.getvalue())
+                web.assert_not_called()
 
     def test_web_manifest_checksum_is_required_starting_at_145(self):
         self.assertNotIn("release-content.json", expected_assets("1.4.4"))

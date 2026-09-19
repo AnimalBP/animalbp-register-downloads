@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+from functools import partial
 import hashlib
 import json
 import os
@@ -15,6 +16,7 @@ from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
 
 from verify_web_demo import ANALYTICS_URL, WEBSITE_CATALOG, WebsiteAccessPending, WebAlignmentPending, WebCheckError, verify_web_demo
+from verify_protected_website import verify_protected_website
 
 
 STABLE_TAG = re.compile(r"v((?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*))")
@@ -158,9 +160,18 @@ def main() -> int:
         version = validate_release(args.repo, release, documents,
                                    fetch(base + "SHA256SUMS.txt"), fetch(base + "latest.yml"))
         print(f"PASS: GitHub {version} documents, {len(expected_assets(version))} asset digests, and Windows updater agree.")
-        web = verify_web_demo(args.repo, release, fetch)
+        policy_path = args.root / "website-verification-policy.json"
+        website_verifier = None
+        if os.path.lexists(policy_path):
+            require(not policy_path.is_symlink() and policy_path.is_file() and policy_path.stat().st_size <= 32 * 1024,
+                    "Website policy must be a bounded regular repository file")
+            website_verifier = partial(verify_protected_website, policy=json.loads(policy_path.read_text()))
+        web = verify_web_demo(args.repo, release, fetch, website_verifier=website_verifier)
         if web["status"] == "legacy_not_configured":
             print("SKIP: Web/demo and website catalog byte parity was not configured for this legacy release; no parity pass is claimed.")
+        elif web["status"] == "passed_with_protected_website":
+            print(f"PASS: Web/demo {version} match the release-pinned manifest across {web['runtime_assets_verified']} assets and {web['runtime_urls_verified']} runtime URLs.")
+            print(f"POLICY PASS: Website Access protection, current production Pages catalog and reviewed deployment catalog match the explicit {version} policy. Authenticated custom-domain content is not verified.")
         else:
             print(f"PASS: Web/demo {version} match the release-pinned manifest across {web['runtime_assets_verified']} assets and {web['runtime_urls_verified']} runtime URLs; the public website catalog matches its release-pinned app catalog.")
         print(json.dumps({"github_version": version, "web_demo": web}, sort_keys=True))
