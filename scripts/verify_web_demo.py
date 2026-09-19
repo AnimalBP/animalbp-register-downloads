@@ -213,7 +213,7 @@ def verify_website_catalog(raw_expected, expected_sha256, version, fetch):
     return {"status": "passed", "version": version, "url": WEBSITE_CATALOG, "sha256": expected_sha256}
 
 
-def verify_web_demo(repo, release, fetch):
+def verify_web_demo(repo, release, fetch, *, website_verifier=None):
     require(repo == "AnimalBP/animalbp-register-downloads", "Web parity is bound to the official downloads repository")
     tag = release.get("tag_name", "")
     match = re.fullmatch(r"v((?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*))", tag)
@@ -285,7 +285,8 @@ def verify_web_demo(repo, release, fetch):
             "edge_analytics": edge, "web_content_verified": True,
             "scope": "Public web/demo bytes and website catalog only; no demo session, backend or Store acceptance inferred"}
     try:
-        result["website_catalog"] = verify_website_catalog(bodies[APP_CATALOG_ASSET], manifest["assets"][APP_CATALOG_ASSET], version, fetch)
+        checker = website_verifier or verify_website_catalog
+        result["website_catalog"] = checker(bodies[APP_CATALOG_ASSET], manifest["assets"][APP_CATALOG_ASSET], version, fetch)
     except (WebCheckError, OSError) as error:
         pending = isinstance(error, WebAlignmentPending)
         result.update(status="pending" if pending else "failed", parity_verified=False,
@@ -293,4 +294,8 @@ def verify_web_demo(repo, release, fetch):
                                        "url": WEBSITE_CATALOG, "verified": False})
         error.web_demo_result = result
         raise
+    if result["website_catalog"]["status"] == "protected_site_verified":
+        result.update(status="passed_with_protected_website", parity_verified=False,
+                      public_web_demo_parity_verified=True, public_custom_domain_verified=False,
+                      scope="Public web/demo bytes plus the explicit protected-website boundary and production-alias catalog policy; authenticated custom-domain bytes, demo sessions, backend and Store acceptance are not inferred")
     return result

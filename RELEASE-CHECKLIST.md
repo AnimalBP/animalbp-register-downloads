@@ -79,3 +79,28 @@ corresponds to **1.4.4.0**.
 Mac updates remain manual under the approved ad-hoc signing and
 non-notarization policy. Store-installed Windows apps update through Microsoft
 Store; direct Windows installations use the separate in-app updater.
+
+## Website verification while the custom domain uses Cloudflare Access
+
+The maintained `website-verification-policy.json` selects an explicit protected
+website mode for its exact stable release and catalog digest. The daily guard
+requires all three checks: the initial `animalbp.com/downloads.json` response
+must be the exact reviewed Access 302 (including login host/path, public `kid`
+and return path); the stable production Pages alias must serve the release-pinned
+catalog; and the reviewed immutable deployment must serve the same catalog.
+An old deployment alone cannot hide changed current production content.
+
+The result is `passed_with_protected_website`: public web/demo bytes and the
+protected-site policy pass, while `public_custom_domain_verified` and overall
+public `parity_verified` remain false. Authenticated custom-domain content and
+Store availability require separate acceptance. No login is followed, no
+credentials are sent, and no Access query tokens are retained. This policy is
+not a fallback for an error, unexpected redirect, login HTML or stale content.
+
+For each new public version, review the actual website production deployment
+and current alias, then update the policy's version, catalog digest and immutable
+deployment/source binding with the release. A later version fails against the
+old policy; never advance its version without verifying the bytes. A changed
+Access boundary also requires explicit review. If the owner later makes the
+custom domain public, retire this policy through a reviewed change and verify
+the normal direct custom-domain catalog path. The guard never changes Access.
