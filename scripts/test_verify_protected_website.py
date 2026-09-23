@@ -22,6 +22,8 @@ class ProtectedWebsiteTests(unittest.TestCase):
         self.web_fixture = fixture
         self.body = fixture.catalog_bytes
         self.policy = json.loads((Path(__file__).resolve().parents[1] / "website-verification-policy.json").read_text())
+        # Synthetic web fixtures must keep their own version when the live policy advances.
+        self.policy["version"] = fixture.version
         self.policy["catalog_sha256"] = digest(self.body)
         self.policy["access_login_kid"] = "a" * 64
         self.deployment = self.policy["reviewed_deployment"]["catalog_url"]

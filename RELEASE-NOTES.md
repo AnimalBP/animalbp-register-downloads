@@ -34,8 +34,8 @@ web bundle as the browser app.
 published with the matching release notes. The 1.4.6 backend and web/demo are
 live: readiness and data-preservation checks passed, and all 16 public web
 files plus their runtime URLs and security headers match the reviewed build.
-The GitHub files accompany this release. The sales website is being aligned
-with these verified downloads; its existing Access protection is retained.
+The GitHub files accompany this release. The sales website now serves the matching download catalog and links; its
+existing Cloudflare Access protection is retained.
 
 The exact direct Windows installer passed an isolated 1.4.0.0 → 1.4.6.0 upgrade,
 preserving a synthetic user-data marker and starting with application outbound
