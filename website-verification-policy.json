@@ -8,9 +8,9 @@
   "access_redirect_path": "/downloads.json",
   "production_catalog_url": "https://animalbp-register-website.pages.dev/downloads.json",
   "reviewed_deployment": {
-    "id": "d52a396c-ac73-4f92-a54e-828aeca4a5c7",
-    "catalog_url": "https://d52a396c.animalbp-register-website.pages.dev/downloads.json",
+    "id": "43af2d6a-ed03-4622-aaca-f68289913b92",
+    "catalog_url": "https://43af2d6a.animalbp-register-website.pages.dev/downloads.json",
     "source_repository": "AnimalBP/animalbp-register-website",
-    "source_commit": "dda04735601203c31abc970995f425ed489c5df0"
+    "source_commit": "4d2ecdb31034dc229612307df3710de4c7ec7bfd"
   }
 }
