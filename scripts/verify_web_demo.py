@@ -47,6 +47,10 @@ class WebCheckError(ValueError):
     pass
 
 
+class EdgeTimestampMismatch(WebCheckError):
+    """A recognized edge bootstrap needs a fresh, independently checked read."""
+
+
 class WebAlignmentPending(WebCheckError):
     pass
 
@@ -74,8 +78,8 @@ def normalize_index(html, expected_sha256):
         require(len(matches) == 1, "Web/demo HTML differs: no unique recognized Cloudflare bootstrap")
         match = matches[0]
         # Canonical base64 encoding of the same decimal timestamp carried by ut.
-        require(base64.b64encode(match["ut_time"]) == match["time"],
-                "Cloudflare bootstrap timestamp fields are inconsistent")
+        if base64.b64encode(match["ut_time"]) != match["time"]:
+            raise EdgeTimestampMismatch("Cloudflare bootstrap timestamp fields are inconsistent")
         before, after = html[:match.start()], html[match.end():]
         # Both exact orders were observed in real responses. Reverse only these
         # terminal byte sequences, including the one analytics newline.
@@ -105,6 +109,17 @@ def normalize_index(html, expected_sha256):
 
 def verify_index(html, expected_sha256):
     return normalize_index(html, expected_sha256)[1]
+
+
+def fetch_verified_index(fetch, url, expected_sha256):
+    """Retry only inconsistent edge timestamps; never accept a failed read."""
+    for attempt in range(1, 4):
+        try:
+            html, report = normalize_index(fetch(url), expected_sha256)
+            return html, report | {"readback_attempts": attempt}
+        except EdgeTimestampMismatch:
+            if attempt == 3:
+                raise
 
 
 def verify_analytics(fetch):
@@ -233,7 +248,6 @@ def verify_web_demo(repo, release, fetch, *, website_verifier=None):
             "Release content bytes differ from the GitHub asset size/digest")
     manifest = json_object(raw_manifest, "Release content manifest")
     validate_manifest(manifest, version)
-    web, demo = fetch(WEB), fetch(DEMO)
     config_bytes = fetch(WEB + "config.js")
     match = re.fullmatch(rb"globalThis\.ABP_CONFIG = Object\.freeze\((.*)\);\s*", config_bytes, flags=re.DOTALL)
     require(match is not None, "Public config is not a generated ABP_CONFIG object")
@@ -244,8 +258,8 @@ def verify_web_demo(repo, release, fetch, *, website_verifier=None):
         raise WebAlignmentPending(f"GitHub {version} is published; web/demo is {config.get('version')}. "
                                   "An approved early GitHub release window is pending deployment alignment, not verified parity.")
     require(digest(config_bytes) == manifest["web_config_sha256"], "Public config differs from the release-pinned content manifest")
-    web, web_index = normalize_index(web, manifest["web_index_sha256"])
-    demo, demo_index = normalize_index(demo, manifest["web_index_sha256"])
+    web, web_index = fetch_verified_index(fetch, WEB, manifest["web_index_sha256"])
+    demo, demo_index = fetch_verified_index(fetch, DEMO, manifest["web_index_sha256"])
     indexes = {"web": web_index, "demo": demo_index}
     edge = verify_analytics(fetch) if any(item["removed_analytics_count"] for item in indexes.values()) else None
     web_page, demo_page = Resources(web, WEB), Resources(demo, DEMO)

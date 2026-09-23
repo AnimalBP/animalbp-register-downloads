@@ -112,6 +112,44 @@ class WebDemoTests(unittest.TestCase):
             script = PRECURSOR if page == WEB else PRECURSOR.replace(b"0123456789abcdef'", b"fedcba9876543210'")
             self.responses[page] = self.responses[page].replace(b"</body>", script + b"</body>")
 
+    def test_inconsistent_edge_read_is_discarded_and_fresh_read_fully_verified(self):
+        self.add_precursor()
+        valid = self.responses[WEB]
+        inconsistent = valid.replace(b"MTcwMDAwMDAwMA==", b"MTcwMDAwMDAwMQ==")
+        reads = iter([inconsistent, valid])
+        requests = []
+
+        def fetch(url):
+            requests.append(url)
+            return next(reads) if url == WEB else self.fetch(url)
+
+        result = verify_web_demo(self.repo, self.release, fetch)
+        self.assertEqual(requests.count(WEB), 2)
+        self.assertEqual(result["html_readback"]["web"]["readback_attempts"], 2)
+        self.assertEqual(result["html_readback"]["web"]["raw_sha256"], digest(valid))
+
+    def test_persistent_timestamp_mismatch_still_fails_after_three_reads(self):
+        self.add_precursor()
+        self.responses[WEB] = self.responses[WEB].replace(b"MTcwMDAwMDAwMA==", b"MTcwMDAwMDAwMQ==")
+        with self.assertRaises(guard.EdgeTimestampMismatch):
+            self.verify()
+        self.assertEqual(self.requests.count(WEB), 3)
+
+    def test_retry_does_not_accept_changed_application_bytes(self):
+        self.add_precursor()
+        valid = self.responses[WEB]
+        reads = iter([valid.replace(b"MTcwMDAwMDAwMA==", b"MTcwMDAwMDAwMQ=="),
+                      valid.replace(b"<!doctype html>", b"<!doctype html><!--changed-->"), valid])
+        requests = []
+
+        def fetch(url):
+            requests.append(url)
+            return next(reads)
+
+        with self.assertRaisesRegex(WebCheckError, "release-pinned content"):
+            guard.fetch_verified_index(fetch, WEB, self.manifest["web_index_sha256"])
+        self.assertEqual(len(requests), 2)
+
     def test_exact_edge_bootstrap_retains_original_release_anchor_and_reports_raw_hashes(self):
         self.add_precursor()
         result = self.verify()
