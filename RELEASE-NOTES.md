@@ -1,72 +1,35 @@
-# AnimalBP Register 1.4.6
+# AnimalBP Register 1.4.7
 
-[Latest release](https://github.com/AnimalBP/animalbp-register-downloads/releases/latest)
-· [1.4.6 downloads and checksums](https://github.com/AnimalBP/animalbp-register-downloads/releases/tag/v1.4.6)
+[Latest release](https://github.com/AnimalBP/animalbp-register-downloads/releases/latest) · [1.4.7 downloads and checksums](https://github.com/AnimalBP/animalbp-register-downloads/releases/tag/v1.4.7)
 
-## What's changed
+- When adding material exposure to an ongoing project, the destination is shown as a read-only project reference. If several accessible projects are active, select another project without losing the details already entered.
+- Optional source filters are grouped under “Narrow the source list — optional” with a clear reset action. Choose a source directly, or expand the filters when you need a shorter list.
+- Complete inventory exports can include original attached documents. Extract the whole ZIP before opening the workbook; links then open the corresponding files, and a Documents sheet lists all originals.
+- Choose completed inventory history from the last 30 days, the last year, the last five years, or all time. Current stock is always included. The former 250 MB document-bundle ceiling is removed; progress, cancellation and recent export downloads are available.
+- Audit exports include every matching authorized record. Choose the current filters or all records in the selected categories and period, without the previous 500-result limit.
+- Mac installation guidance appears when selecting the Mac download. Windows users no longer see a global unsigned-pilot warning in Settings.
+- The Used goods “Apply period” button aligns with its date fields.
 
-- **Audit CSV downloads:** Choose Usage data, System log, or both before
-  downloading. The dialog explains the 500-event limit and export scope.
-  Existing visibility permissions and protection against spreadsheet formulas
-  in exported values remain in place.
-- **Cryovial registration:** Numbered sections separate culture and vial
-  details, source and lineage, and storage. Freezer, rack, box and interactive
-  position selection appear together. Storage changes clear incompatible
-  positions with an explanation while preserving user-edited vial identifiers.
-- **New account emails:** A shared professional invitation gives users and
-  administrators clear sign-in details and first-password-change instructions.
-  Temporary-password restrictions and account permissions are unchanged.
-- **Unavailable-service screen:** The message names AnimalBP Register without
-  calling the service a pilot or assuming the hosting Mac is offline. It gives
-  users a clear retry and contact action.
+Large exports require sufficient temporary server and local download space. If a complete document bundle cannot be prepared, the export reports the problem instead of silently omitting files. Historical records without a recorded completion date remain included and are identified in the workbook.
 
-The receiving-note chooser remains inside Receive goods, before Comments.
-Usage remains the default Audit history view. No database migration is required
-for this update.
+## Versions and rollout
 
-## Versions and release status
+Mac, direct Windows installers, web and demo content use **1.4.7**. Microsoft
+Store uses **1.4.7.0**. The demo shares the browser bundle.
 
-Mac, direct Windows installers, browser and demo content use **1.4.6**. The
-corresponding Microsoft Store package uses **1.4.6.0**. The demo uses the same
-web bundle as the browser app.
+The final direct Windows installer passed the isolated 1.4.0.0 to 1.4.7.0
+replacement rehearsal, preserving its synthetic profile marker. Both native
+Mac and Windows Excel opened the accepted inventory workbook without repair
+and followed its relative original-file links. Final Store delivery and direct
+Windows updater delivery remain post-publication checks.
 
-**Release status, 23 September 2026 UTC:** Microsoft Store 1.4.6.0 is
-published with the matching release notes. The 1.4.6 backend and web/demo are
-live: readiness and data-preservation checks passed, and all 16 public web
-files plus their runtime URLs and security headers match the reviewed build.
-The GitHub files accompany this release. The sales website now serves the matching download catalog and links; its
-existing Cloudflare Access protection is retained.
+## Installation
 
-The exact direct Windows installer passed an isolated 1.4.0.0 → 1.4.6.0 upgrade,
-preserving a synthetic user-data marker and starting with application outbound
-traffic blocked. Shutdown and cleanup were verified. This exercises installer
-replacement; live updater discovery/download and authenticated Windows
-interactions remain unverified. An installed Windows test device is currently
-unavailable, so native Microsoft Store update check, download and installation
-also remain unverified on a user device.
+Mac installation is manual, ad-hoc signed and not Apple-notarized; follow the
+included English or Danish `READ ME FIRST.txt`. Microsoft Store and direct
+Windows installations retain their separate update channels.
 
-## Installation and update channels
-
-**Mac:** Distribution remains manual, ad-hoc signed and not Apple-notarized,
-with automatic Mac updates disabled. Verify the checksum and follow the
-English or Danish `READ ME FIRST.txt` installation guide included in the DMG.
-Managed Macs may require IT approval.
-
-**Windows from Microsoft Store:** Existing Settings and Help update controls
-check and download through Microsoft, then wait for an explicit installation
-action. Save unfinished forms before installing; Windows may close the app.
-Open Microsoft Store remains available if a check fails. Version 1.4.6.0 is published in Microsoft Store; delivery can depend on
-Store caching and the device.
-Store installations do not use the EXE updater.
-
-**Direct Windows installations:** The existing Check for Updates, Download
-Update, and Restart and install flow uses matching `.exe`, `.blockmap` and
-`latest.yml` assets. The separate per-user installer is not Authenticode-signed;
-checksums verify file integrity rather than publisher identity. Organisation
-policies may restrict installation.
-
-Built from reviewed source commit `ba9fcfde1a052cb3941126010daf0e26cf8136b1`.
-Use the `SHA256SUMS.txt` attached to the [1.4.6 release](https://github.com/AnimalBP/animalbp-register-downloads/releases/tag/v1.4.6)
-to verify files. `release-content.json` pins the matching web build and shared
-app/website download catalog for release verification. Earlier notes and assets
-remain in [release history](https://github.com/AnimalBP/animalbp-register-downloads/releases).
+Built from reviewed source commit `daf0e401a9d3b3890cd134c3cc3d63538e7131c8`.
+Use [SHA-256 checksums](https://github.com/AnimalBP/animalbp-register-downloads/releases/download/v1.4.7/SHA256SUMS.txt)
+to verify the files. Existing records and access controls are retained; no
+database schema migration is required.
