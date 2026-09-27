@@ -1,16 +1,16 @@
 {
   "schema": "animalbp-protected-website-policy-v1",
-  "version": "1.4.6",
-  "catalog_sha256": "fb4ac734e682f6ad58c812c5af70384838e1868723d404b99d6aad4ad938aea7",
+  "version": "1.4.7",
+  "catalog_sha256": "9c8489b2a7329a6dcce066da9c8d83ab7b24b0db778aac8cb30ec19fd927cca3",
   "custom_catalog_url": "https://animalbp.com/downloads.json",
   "access_login_url": "https://animalbp.cloudflareaccess.com/cdn-cgi/access/login/animalbp.com",
   "access_login_kid": "b453a017f612dfd810898405ae08828eb6853b49d1d44f90453a51b908ba2397",
   "access_redirect_path": "/downloads.json",
   "production_catalog_url": "https://animalbp-register-website.pages.dev/downloads.json",
   "reviewed_deployment": {
-    "id": "43af2d6a-ed03-4622-aaca-f68289913b92",
-    "catalog_url": "https://43af2d6a.animalbp-register-website.pages.dev/downloads.json",
+    "id": "d3045eef-a05a-493c-b2fa-2a62fa6488d2",
+    "catalog_url": "https://d3045eef.animalbp-register-website.pages.dev/downloads.json",
     "source_repository": "AnimalBP/animalbp-register-website",
-    "source_commit": "4d2ecdb31034dc229612307df3710de4c7ec7bfd"
+    "source_commit": "73d7d46faab03029fb99efe3b10a3ee5819debe5"
   }
 }
