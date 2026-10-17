@@ -41,6 +41,13 @@ corresponds to **1.4.4.0**.
   and integrity readback; account-side activation has not been verified.
   Unknown additions and any other tail changes fail. The application digest
   and runtime URL checks remain independent of this explicit edge allowance.
+- If Cloudflare rotates that analytics version, preserve the failing response
+  and compare it with the release-pinned HTML before updating the allowance.
+  Review the exact new vendor bytes and verify their SRI without redirects.
+  Test both recognized script orders and rejection of changed, retired or mixed
+  pins, then run the full live verifier. The 18 October 2026 review updates only
+  the analytics URL/SRI pair. Do not change the release manifest, discover trusted
+  pins from served HTML, or broadly accept vendor scripts to silence a failure.
 - If the website catalog redirects to the known Cloudflare Access login,
   the guard returns `PENDING` (exit 2). It retains completed app/web/demo byte
   checks separately, with overall parity false and catalog verification pending.
