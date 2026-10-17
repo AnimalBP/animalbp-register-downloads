@@ -19,6 +19,16 @@ PRECURSOR = (b"<script>window.__CF$cv$params={r:'0123456789abcdef',t:'MTcwMDAwMD
              b"s.src='/cdn-cgi/challenge-platform/scripts/precursor/main.js';"
              b"document.head.appendChild(s);})();</script>")
 
+# Literal public analytics tag observed on both app/demo entry points on
+# 18 October 2026. Keep this independent of the guard's generated allowance.
+OCTOBER_ANALYTICS = (
+    b'<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/'
+    b'vce701823e78c4301a35b7e07294d87301792088814092" '
+    b'integrity="sha512-UKNk8GbxkABxKcXYuLkO16EleLGUkcvJWtpSNmExE0Too3ZaFAxTscNWEc1OdAv5/BikHawapSCaiD2XCmp+Bw==" '
+    b'data-cf-beacon=\'{"version":"2024.11.0","token":"0d712fc37bc2466db5fdc49650594205",'
+    b'"r":1,"spa":2}\' crossorigin="anonymous"></script>'
+)
+
 
 def digest(data):
     return hashlib.sha256(data).hexdigest()
@@ -199,6 +209,35 @@ class WebDemoTests(unittest.TestCase):
                 with self.assertRaises(WebCheckError):
                     verify_index(original.replace(b"</body>", guard._ANALYTICS + gap + PRECURSOR + b"</body>"), digest(original))
 
+    def test_observed_october_analytics_restores_release_bytes_in_both_orders(self):
+        original = self.responses[WEB]
+        for order, additions in [
+            ("precursor-analytics", PRECURSOR + OCTOBER_ANALYTICS + b"\n"),
+            ("analytics-precursor", OCTOBER_ANALYTICS + b"\n" + PRECURSOR),
+        ]:
+            with self.subTest(order=order):
+                served = original.replace(b"</body>", additions + b"</body>")
+                normalized, report = guard.normalize_index(served, digest(original))
+                self.assertEqual(normalized, original)
+                self.assertEqual(report["edge_script_order"], order)
+                self.assertEqual(report["removed_analytics_count"], 1)
+
+    def test_retired_or_mixed_analytics_pins_cannot_authorize_an_addition(self):
+        original = self.responses[WEB]
+        old_url = b"https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495"
+        old_sri = b"sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg=="
+        for tag in [
+            OCTOBER_ANALYTICS.replace(guard.ANALYTICS_URL.encode(), old_url),
+            OCTOBER_ANALYTICS.replace(guard.ANALYTICS_SRI.encode(), old_sri),
+            OCTOBER_ANALYTICS.replace(guard.ANALYTICS_URL.encode(), old_url)
+                .replace(guard.ANALYTICS_SRI.encode(), old_sri),
+        ]:
+            for additions in [PRECURSOR + tag + b"\n", tag + b"\n" + PRECURSOR]:
+                with self.subTest(tag=tag, additions_start=additions[:20]):
+                    self.assertNotEqual(tag, OCTOBER_ANALYTICS)
+                    with self.assertRaises(WebCheckError):
+                        verify_index(original.replace(b"</body>", additions + b"</body>"), digest(original))
+
     def test_analytics_integrity_is_fetched_and_checked_separately_from_app_assets(self):
         self.add_analytics()
         body = b"synthetic analytics test bytes"
@@ -231,9 +270,9 @@ class WebDemoTests(unittest.TestCase):
         served = self.responses[WEB]
         changes = [
             (b"0d712fc37bc2466db5fdc49650594205", b"0" * 32),
-            (b"beacon.min.js/v31", b"other.min.js/v31"),
+            (b"beacon.min.js/", b"other.min.js/"),
             (b"static.cloudflareinsights.com", b"evil.invalid"),
-            (b"sha512-iIg7", b"sha512-AAAA"),
+            (b"sha512-", b"sha512-AAAA"),
             (b'"spa":2', b'"spa":3'), (b'"r":1', b'"r":2'),
             (b'crossorigin="anonymous"', b'onload="alert(1)"'),
             (b"</body>\n</html>\n", b"</body>\n</html>\n\n"),
@@ -241,6 +280,7 @@ class WebDemoTests(unittest.TestCase):
         ]
         for before, after in changes:
             with self.subTest(before=before):
+                self.assertIn(before, served)
                 with self.assertRaises(WebCheckError):
                     verify_index(served.replace(before, after), digest(original))
         for changed in [served + b"<!-- extra -->", guard._ANALYTICS + served,

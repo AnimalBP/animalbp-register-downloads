@@ -32,8 +32,10 @@ _PRECURSOR = re.compile(
                 b"s.src='/cdn-cgi/challenge-platform/scripts/precursor/main.js';"
                 b"document.head.appendChild(s);})();</script>")
 )
-ANALYTICS_URL = "https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495"
-ANALYTICS_SRI = "sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg=="
+# Current public analytics bytes reviewed on 18 October 2026. A vendor rollout
+# is not authority to accept an arbitrary version or learn a pin from the page.
+ANALYTICS_URL = "https://static.cloudflareinsights.com/beacon.min.js/vce701823e78c4301a35b7e07294d87301792088814092"
+ANALYTICS_SRI = "sha512-UKNk8GbxkABxKcXYuLkO16EleLGUkcvJWtpSNmExE0Too3ZaFAxTscNWEc1OdAv5/BikHawapSCaiD2XCmp+Bw=="
 # Exact reviewed public addition and token, not a wildcard for vendor scripts.
 # Account-side activation attribution was unavailable; this is an explicit
 # allowance of these observed, integrity-verified bytes, not a config claim.
@@ -91,14 +93,16 @@ def normalize_index(html, expected_sha256):
             analytics, edge_order = 1, "analytics-precursor"
         else:
             require(re.fullmatch(rb"</body>[ \t\r\n]{0,8}</html>[ \t\r\n]{0,8}", after) is not None,
-                    "Cloudflare bootstrap must occur immediately before the final closing body")
+                    "Cloudflare bootstrap must occur immediately before the final closing body. "
+                    "Check for changed HTML or an unreviewed analytics URL/SRI")
             normalized = before + after
         if analytics:
             require(html.count(_ANALYTICS) == 1, "Duplicate reviewed analytics additions are not accepted")
         removed = 1
     normalized_digest = digest(normalized)
     require(normalized_digest == expected_sha256,
-            "Web/demo HTML differs from the release-pinned content manifest after exact edge normalization")
+            "Web/demo HTML differs from the release-pinned content manifest after exact edge normalization. "
+            "Check application bytes and the pinned Cloudflare analytics URL/SRI")
     return normalized, {"raw_sha256": raw_digest, "normalized_sha256": normalized_digest,
             "release_index_sha256": expected_sha256,
             "normalization": "cloudflare-precursor-and-analytics-v1" if analytics else "cloudflare-precursor-bootstrap-v1" if removed else "none",
