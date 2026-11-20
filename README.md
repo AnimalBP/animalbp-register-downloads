@@ -20,8 +20,9 @@ The exact direct Windows installer passed an isolated 1.4.0.0 to 1.4.7.0
 upgrade, preserving a synthetic user-data marker, starting with outbound traffic
 blocked, and completing shutdown and cleanup. Installed Mac and Windows beta
 acceptance covered project switching, optional filters, exports and original
-file links in native Excel. Final Store delivery and the direct Windows live
-updater flow remain separate post-publication checks.
+file links in native Excel. The Microsoft Store published package 1.4.7.0.
+Its upgrade from 1.4.6 preserved the signed-in account in the tested Windows
+VM. The direct-download Windows updater still awaits a live end-to-end check.
 
 ## Inventory documents
 
