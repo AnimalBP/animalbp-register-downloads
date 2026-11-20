@@ -20,17 +20,27 @@ WEBSITE_CATALOG = "https://animalbp.com/downloads.json"
 APP_CATALOG_ASSET = "assets/desktop-downloads.json"
 STABLE_VERSION = r"(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)"
 
-# The one observed Cloudflare Precursor bootstrap, not a general script filter.
-# Only request identifiers vary; every executable byte and the same-origin
-# script path are literal. A future Cloudflare change must fail for review.
+# Match the literal loader code observed in the app and demo. The November
+# loader repeats the bootstrap's request ID in its same-origin script URL.
+_FIXED_PATH_LOADER = re.escape(
+    b"var s=document.createElement('script');"
+    b"s.src='/cdn-cgi/challenge-platform/scripts/precursor/main.js';"
+)
+_RAY_QUERY_LOADER = (
+    re.escape(b"var l=window.location,o;try{o=new URL(l.origin).origin}catch(e){"
+              b"try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}"
+              b"var u='/cdn-cgi/challenge-platform/scripts/precursor/main.js?ray=")
+    + rb"(?P=ray)"
+    + re.escape(b"',s=document.createElement('script');s.src=o?new URL(u,o).href:u;")
+)
 _PRECURSOR = re.compile(
-    re.escape(b"<script>window.__CF$cv$params={r:'") + rb"[0-9a-f]{16}"
+    re.escape(b"<script>window.__CF$cv$params={r:'") + rb"(?P<ray>[0-9a-f]{16})"
     + re.escape(b"',t:'") + rb"(?P<time>[A-Za-z0-9+/]{14}==)"
     + re.escape(b"',u:'") + rb"[0-9a-f]{32}"
     + re.escape(b"',ut:'") + rb"[A-Za-z0-9_.-]{43}-(?P<ut_time>[0-9]{10})-1\.2\.1\.1-[A-Za-z0-9_.-]{107}"
-    + re.escape(b"',i:60};(function(){if(!document.body)return;var s=document.createElement('script');"
-                b"s.src='/cdn-cgi/challenge-platform/scripts/precursor/main.js';"
-                b"document.head.appendChild(s);})();</script>")
+    + re.escape(b"',i:60};(function(){if(!document.body)return;")
+    + b"(?:" + _FIXED_PATH_LOADER + b"|" + _RAY_QUERY_LOADER + b")"
+    + re.escape(b"document.head.appendChild(s);})();</script>")
 )
 # Current public analytics bytes reviewed on 18 October 2026. A vendor rollout
 # is not authority to accept an arbitrary version or learn a pin from the page.

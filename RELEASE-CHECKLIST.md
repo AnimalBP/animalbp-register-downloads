@@ -26,13 +26,15 @@ corresponds to **1.4.4.0**.
   against this release-pinned app catalog; the website cannot authorize its
   own changed content by serving a matching version label.
 - Cloudflare may append its Precursor security bootstrap to the HTML response.
-  The guard accepts only the reviewed literal bootstrap immediately before the
-  final closing body, once, with bounded request fields and its fixed same-origin
-  script path. It removes only that recognized addition for comparison with the
-  original release-pinned HTML digest. Reports retain both raw and normalized
-  hashes. Any changed bootstrap, extra HTML or script, or changed application
-  asset still fails; runtime and query URL hashes remain mandatory. This checks
-  application content, not the dynamically served Cloudflare security script.
+  The guard accepts one reviewed bootstrap at the end of the body. Both
+  reviewed loader forms use bounded request fields and the same script path.
+  The form observed on 20 November 2026 resolves the site origin and repeats
+  the 16-character hexadecimal request ID from the bootstrap in its `ray` query.
+  The restored HTML must match the original release-pinned SHA-256. Reports
+  retain both raw and normalized hashes. An unreviewed bootstrap, extra HTML
+  or script, or changed application asset fails verification. Runtime and query
+  URL hashes remain mandatory. The HTML check covers the application content
+  and the literal code that loads Cloudflare's dynamic security script.
   Do not disable Cloudflare protections or weaken CSP to make this check pass.
 - The separately reviewed Cloudflare Web Analytics addition is allowed only
   with its exact public token, URL, SRI, attributes and closing-tail bytes.

@@ -11,13 +11,29 @@ import verify_web_demo as guard
 from verify_web_demo import APP_CATALOG_ASSET, DEMO, WEB, WEBSITE_CATALOG, WebsiteAccessPending, WebAlignmentPending, WebCheckError, verify_index, verify_web_demo
 
 
-# Synthetic request parameters only; no live challenge tokens are retained.
-PRECURSOR = (b"<script>window.__CF$cv$params={r:'0123456789abcdef',t:'MTcwMDAwMDAwMA==',"
-             b"u:'0123456789abcdef0123456789abcdef',ut:'" + b"a" * 43
-             + b"-1700000000-1.2.1.1-" + b"b" * 107
-             + b"',i:60};(function(){if(!document.body)return;var s=document.createElement('script');"
-             b"s.src='/cdn-cgi/challenge-platform/scripts/precursor/main.js';"
-             b"document.head.appendChild(s);})();</script>")
+# All request fields in these fixtures are synthetic.
+def precursor_parameters(ray):
+    return (b"<script>window.__CF$cv$params={r:'" + ray + b"',t:'MTcwMDAwMDAwMA==',"
+            b"u:'0123456789abcdef0123456789abcdef',ut:'" + b"a" * 43
+            + b"-1700000000-1.2.1.1-" + b"b" * 107 + b"',i:60};")
+
+
+PRECURSOR = precursor_parameters(b"0123456789abcdef") + (
+    b"(function(){if(!document.body)return;var s=document.createElement('script');"
+    b"s.src='/cdn-cgi/challenge-platform/scripts/precursor/main.js';"
+    b"document.head.appendChild(s);})();</script>"
+)
+
+
+def november_precursor(ray):
+    # Literal loader body from the 20 November app and demo responses.
+    return precursor_parameters(ray) + (
+        b"(function(){if(!document.body)return;var l=window.location,o;"
+        b"try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}"
+        b"var u='/cdn-cgi/challenge-platform/scripts/precursor/main.js?ray=" + ray
+        + b"',s=document.createElement('script');s.src=o?new URL(u,o).href:u;"
+        b"document.head.appendChild(s);})();</script>"
+    )
 
 # Literal public analytics tag observed on both app/demo entry points on
 # 18 October 2026. Keep this independent of the guard's generated allowance.
@@ -221,6 +237,50 @@ class WebDemoTests(unittest.TestCase):
                 self.assertEqual(normalized, original)
                 self.assertEqual(report["edge_script_order"], order)
                 self.assertEqual(report["removed_analytics_count"], 1)
+
+    def test_november_loader_verifies_both_pages_and_the_downloaded_analytics_script(self):
+        original = self.responses[WEB]
+        for page, ray in [(WEB, b"0123456789abcdef"), (DEMO, b"fedcba9876543210")]:
+            additions = november_precursor(ray) + OCTOBER_ANALYTICS + b"\n"
+            self.responses[page] = original.replace(b"</body>", additions + b"</body>")
+
+        body = b"synthetic analytics test bytes"
+        self.responses[guard.ANALYTICS_URL] = body
+        fixture_sri = "sha512-" + base64.b64encode(hashlib.sha512(body).digest()).decode()
+        with patch.object(guard, "ANALYTICS_SRI", fixture_sri):
+            result = self.verify()
+            self.assertEqual(result["edge_analytics"]["status"], "integrity_verified")
+            for name, page in [("web", WEB), ("demo", DEMO)]:
+                report = result["html_readback"][name]
+                self.assertEqual(report["raw_sha256"], digest(self.responses[page]))
+                self.assertEqual(report["normalized_sha256"], digest(original))
+                self.assertEqual(report["edge_script_order"], "precursor-analytics")
+                self.assertEqual(report["removed_bootstrap_count"], 1)
+                self.assertEqual(report["removed_analytics_count"], 1)
+
+            self.responses[guard.ANALYTICS_URL] = body + b"\n"
+            with self.assertRaisesRegex(WebCheckError, "reviewed SRI"):
+                self.verify()
+
+    def test_november_loader_rejects_changed_request_binding_code_and_page_bytes(self):
+        original = self.responses[WEB]
+        additions = november_precursor(b"0123456789abcdef") + OCTOBER_ANALYTICS + b"\n"
+        served = original.replace(b"</body>", additions + b"</body>")
+        changes = [
+            (b"?ray=0123456789abcdef", b"?ray=fedcba9876543210"),
+            (b"?ray=0123456789abcdef", b"?ray=0123456789abcdef&v=1"),
+            (b"precursor/main.js", b"precursor/other.js"),
+            (b"new URL(l.origin).origin", b"l.origin"),
+            (b"MTcwMDAwMDAwMA==", b"MTcwMDAwMDAwMQ=="),
+            (b"sha512-UKNk", b"sha512-AAAA"),
+            (additions, PRECURSOR + additions),
+            (b"<!doctype html>", b"<!doctype html>\n"),
+        ]
+        for before, after in changes:
+            with self.subTest(change=before[:32]):
+                self.assertIn(before, served)
+                with self.assertRaises(WebCheckError):
+                    verify_index(served.replace(before, after, 1), digest(original))
 
     def test_retired_or_mixed_analytics_pins_cannot_authorize_an_addition(self):
         original = self.responses[WEB]
